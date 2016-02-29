@@ -1,0 +1,10 @@
+graft docs
+graft examples
+graft floto
+graft tests
+graft conda.recipe
+
+include LICENSE
+include README.md
+
+global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store
