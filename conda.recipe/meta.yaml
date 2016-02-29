@@ -59,6 +59,7 @@ test:
 about:
   home: https://github.com/babbel/floto
   license: MIT
+  license_file: LICENSE
   summary: 'Task Orchestration Tool Based on AWS Simple Workflow and boto3'
 
 # See

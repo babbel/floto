@@ -45,6 +45,7 @@ engine:
 ## Run before the script
 before_script:
   - python -V
+  - conda build --version
   #- conda update -n root conda-build
   - conda config --add channels 'http://conda.anaconda.org/babbel'  
 
