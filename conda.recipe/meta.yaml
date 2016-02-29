@@ -1,0 +1,66 @@
+package:
+  name: floto
+  version: "0.0.1"
+
+source:
+  path: ../
+#  patches:
+   # List any patch files here
+   # - fix.patch
+
+build:
+  # noarch_python: True
+  # preserve_egg_dir: True
+  # entry_points:
+    # Put any entry points (scripts to be generated automatically) here. The
+    # syntax is module:function.  For example
+    #
+    # - floto = floto:main
+    #
+    # Would create an entry point called floto that calls floto.main()
+
+
+  # If this is a new build for the same version, increment the build
+  # number. If you do not include this key, it defaults to 0.
+  # number: 2
+
+requirements:
+  build:
+    - python>=3.5
+    - setuptools
+    - boto3 >=1.2.3,<1.2.4
+
+  run:
+    - python>=3.5
+    - boto3 >=1.2.3,<1.2.4
+
+test:
+  # Python imports
+  # imports:
+  #  - floto
+
+  requires:
+    # Put any additional test requirements here.  For example
+    - pytest >=2.8.5
+    - pytest-mock >=0.11.0
+    - pytest-pythonpath >=0.7
+
+  # commands:
+    # You can put test commands to be run here.  Use this to test that the
+    # entry points work.
+
+   # - py.test -vx -rsxX
+
+  # You can also put a file called run_test.py in the recipe that will be run
+  # at test time.
+
+
+
+about:
+  home: https://github.com/babbel/floto
+  license: MIT
+  summary: 'Task Orchestration Tool Based on AWS Simple Workflow and boto3'
+
+# See
+# http://docs.continuum.io/conda/build.html for
+# more information about meta.yaml
