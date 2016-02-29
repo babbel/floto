@@ -37,14 +37,14 @@ the same time without interference of the workflow execution or result which aga
 higher resilience and scalability. Every step of a workflow execution is recorded by SWF and the 
 history of events is provided to the Deciders when they are about to schedule tasks.
 
-Unfortunately the process of implementing a SWF workflow is somewhat tedious if you want to e.g. 
+The process of implementing a SWF workflow can be somewhat tedious if you want to e.g. 
 handle complex execution logics and treat task failures and time-outs.
 floto solves this problem by providing a Python package which allows you to easily define the 
 execution logics and activity worker.
 For the impatient we provide a ["Getting started example"](examples/hello_world.py) of a
 simple workflow.
 
-## Defining the Worklfow's Logics
+## Defining the Workflow's Logics
 The business logic of your distributed application is handled by so called Deciders. Deciders act on events like workflow start, task completion or task failure and schedule tasks that are to be executed. The logic itself is defined by means of "Decider Specifications".
 ### Decider
 The Decider implements the application's business logic. The following code defines the execution logics as depicted in figure 1. In this example ``ActivityA`` and ``ActivityB`` are scheduled after the workflow start. ``ActivityC`` is executed once they are completed.
