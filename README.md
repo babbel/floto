@@ -49,7 +49,7 @@ The business logic of your distributed application is handled by so called Decid
 ### Decider
 The Decider implements the application's business logic. The following code defines the execution logics as depicted in figure 1. In this example ``ActivityA`` and ``ActivityB`` are scheduled after the workflow start. ``ActivityC`` is executed once they are completed.
 
-![alt tag](doc/images/decider_spec_01.png)
+![alt tag](docs/images/decider_spec_01.png)
 
 ```python
 from floto.specs import ActivityTask, DeciderSpec
@@ -125,7 +125,7 @@ Decider Specifications have a JSON representation, which alternatively can be pa
 
 Example task definitions for the delayed execution of ``ActivityB``:
 
-![alt tag](doc/images/decider_spec_02.png)
+![alt tag](docs/images/decider_spec_02.png)
 
 ```python
 activity_task_a = ActivityTask(name='ActivityA', version='v1')
@@ -135,7 +135,7 @@ activity_task_b = ActivityTask(name='ActivityB', version='v1', requires=[timer_3
 
 Example task definitions for a "repeated workflow execution" delay. In this case the workflow does not complete before the ``timer_3600`` times out after one hour.
 
-![alt tag](doc/images/decider_spec_03.png)
+![alt tag](docs/images/decider_spec_03.png)
 
 ```python
 activity_task_a = ActivityTask(name='ActivityA', version='v1')
