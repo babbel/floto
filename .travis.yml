@@ -1,10 +1,14 @@
 language: python
 sudo: false
 
+# We don't care about Travis' python versions, we install conda anyway
 python:
-- 3.5
+  - 3.4
 
-install:
+env:
+  - CONDA_PYTHON_VERSION=3.5
+
+before_install:
   # Install conda
   - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -12,9 +16,10 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
 
+install:
   # Install dependencies
-  - conda create --yes -n test-environment python=$TRAVIS_PYTHON_VERSION 
-  - source activate test-environment
+  - conda create --yes -n testenv_$CONDA_PYTHON_VERSION python=$CONDA_PYTHON_VERSION 
+  - source activate testenv_$CONDA_PYTHON_VERSION
   - conda install -c https://conda.anaconda.org/babbel boto3 pytest pytest-mock pytest-pythonpath
 
 script:
