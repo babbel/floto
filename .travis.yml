@@ -2,9 +2,6 @@ language: python
 sudo: false
 
 # We don't care about Travis' python versions, we install conda anyway
-python:
-  - 3.4
-
 env:
   - CONDA_PYTHON_VERSION=3.5
 
