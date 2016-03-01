@@ -16,10 +16,9 @@ install:
   - conda create --yes -n test-environment python=$TRAVIS_PYTHON_VERSION 
   - source activate test-environment
   - conda install -c https://conda.anaconda.org/babbel boto3 pytest pytest-mock pytest-pythonpath
-  - export AWS_DEFAULT_REGION="eu-west-1"
 
 script:
   - py.test -vv -r sxX
 
 notifications:
-  email: false
+  email: true
