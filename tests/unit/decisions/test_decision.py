@@ -1,11 +1,22 @@
 import pytest
 import floto.decisions
 
-class TestDecision():
+@pytest.fixture
+def decision():
+    return floto.decisions.Decision()
 
-    @pytest.mark.xfail
-    def test_path_in_dictionary(self):
-        # TODO: move tests from test_schedule_activity_task here
-        assert False
+class TestDecision():
+    def test_path_in_dictionary(self, decision):
+        dictionary = {'key':'value'}
+        assert decision.path_in_dictionary(dictionary, 'key')
+        assert not decision.path_in_dictionary(dictionary, 'key2')
+
+    def test_path_in_dictionary_several_keys(self, decision):
+        dictionary = {'key':{'key2':'val'}}
+        assert decision.path_in_dictionary(dictionary, 'key.key2')
+
+    def test_path_in_dictionary_several_keys(self, decision):
+        dictionary = {'key':{'key2':'val'}}
+        assert decision.path_in_dictionary(dictionary, 'key.key2')
 
 

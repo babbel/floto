@@ -53,5 +53,7 @@ docs/_build/
 # PyBuilder
 target/
 
+# Vim
+*.swp
 secrets.py
 .hypothesis
