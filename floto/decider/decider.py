@@ -60,5 +60,5 @@ class Decider(Base):
             self.terminate_workflow = False
             self.terminate_decider = False
         else:
-            self.terminate_decider = True
+            self.terminate_decider = self.decider_spec.terminate_decider_after_completion
 

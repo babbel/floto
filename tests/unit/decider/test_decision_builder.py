@@ -272,7 +272,7 @@ class TestDecisionBuilder(object):
         mocker.patch('floto.decider.DecisionInput.get_input_task', return_value='i')
         d = builder.get_decision_schedule_activity(child_workflow_task)
         assert isinstance(d, floto.decisions.StartChildWorkflowExecution)
-        assert d._get_attribute('input') == 'i'
+        assert json.loads(d._get_attribute('input')) == 'i'
         assert 'wft_name' in d.workflow_id
 
     def test_get_decision_schedule_activity_with_timer(self, mocker, builder):
@@ -431,7 +431,7 @@ class TestDecisionBuilder(object):
         d = builder.get_decision_start_child_workflow_execution(child_workflow_task=cw_task, 
                 input_={'foo':'bar'})
         assert d.task_list['name'] == 'tl'
-        assert d._get_attribute('input') == {'foo':'bar'}
+        assert json.loads(d._get_attribute('input')) == {'foo':'bar'}
 
     def test_all_workflow_tasks_finished_depending_tasks(self, builder, mocker):
         mocker.patch('floto.decider.DecisionBuilder.completed_have_depending_tasks', 

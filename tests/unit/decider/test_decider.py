@@ -15,7 +15,8 @@ def task_2(task_1):
 @pytest.fixture
 def decider_spec(task_1, task_2):
     activity_tasks = [task_1, task_2]
-    decider_spec = DeciderSpec(domain='d', task_list='tl', activity_tasks=activity_tasks)
+    decider_spec = DeciderSpec(domain='d', task_list='tl', activity_tasks=activity_tasks,
+            terminate_decider_after_completion=True)
     return decider_spec 
 
 @pytest.fixture

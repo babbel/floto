@@ -16,7 +16,8 @@ def test_04():
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),
                                activity_tasks=[a1, a3],
-                               activity_task_list='floto_activities')
+                               activity_task_list='floto_activities',
+                               terminate_decider_after_completion=True)
 
     decider = floto.decider.Decider(decider_spec=decider_spec)
 

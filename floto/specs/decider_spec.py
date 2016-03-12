@@ -8,7 +8,7 @@ class DeciderSpec:
     floto.decider.Deciders"""
 
     def __init__(self, domain=None, task_list=None, activity_tasks=None, activity_task_list=None,
-                 repeat_workflow=False):
+                 repeat_workflow=False, terminate_decider_after_completion=False):
         """
         Parameters
         ----------
@@ -27,6 +27,8 @@ class DeciderSpec:
         self.activity_tasks = activity_tasks
         self.activity_task_list = activity_task_list
         self.repeat_workflow = repeat_workflow
+        # TODO test
+        self.terminate_decider_after_completion = terminate_decider_after_completion
 
     def to_json(self):
         return json.dumps(self, cls=floto.specs.JSONEncoder, sort_keys=True)

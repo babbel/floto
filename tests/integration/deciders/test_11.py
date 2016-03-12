@@ -15,7 +15,8 @@ def test_11():
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),
                                activity_tasks=[activity_task_1],
-                               activity_task_list='floto_activities')
+                               activity_task_list='floto_activities',
+                               terminate_decider_after_completion=True)
 
     decider = SlowDecider(decider_spec)
 

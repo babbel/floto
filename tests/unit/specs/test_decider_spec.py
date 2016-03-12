@@ -21,7 +21,8 @@ class TestDeciderSpec():
         assert j == json.dumps({'type':'floto.specs.DeciderSpec',
                                 'domain':'d',
                                 'activity_tasks':['t1'],
-                                'repeat_workflow':False}, 
+                                'repeat_workflow':False,
+                                'terminate_decider_after_completion':False}, 
                                sort_keys=True)
 
     def test_to_json_activity_task_list(self):

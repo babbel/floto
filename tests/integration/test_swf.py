@@ -12,6 +12,8 @@ from deciders.test_11 import test_11
 from deciders.test_12 import test_12
 from deciders.test_13 import test_13
 from deciders.test_14 import test_14
+from deciders.test_15 import test_15
+from deciders.test_16 import test_16
 
 from activity_worker import ActivityWorkerProcess
 from test_helper import get_activity_result
@@ -130,13 +132,21 @@ def run_13():
 def run_14():
     # Simple test with child workflow
     result = test_14()
-    print(result)
+    result = get_activity_result(result, 'test_child_workflow', 'v2')
+    assert [r for r in result.keys() if 'activity2' in r]
+
+def run_15():
+    result = test_15()
+    result = get_activity_result(result, 'test_child_workflow', 'v2')
+    assert result
+
+def run_16():
+    result = test_16()
+    assert result
 
 tests = [run_01, run_02, run_03, run_04, run_05, run_06, run_07, run_08, run_09, run_10, run_11,
-         run_12, run_13]
+         run_12, run_13, run_14, run_15, run_16]
 
-tests = [run_14]
-       
 try:
     [t() for t in tests]
 except (KeyboardInterrupt, SystemExit):

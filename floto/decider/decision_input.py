@@ -32,8 +32,8 @@ class DecisionInput:
         for e in failed_tasks_events:
             attributes = self.history.get_event_attributes(e)
             if 'details' in attributes:
-                activity_id = self.history.get_id_activity_task_event(e)
-                details[activity_id] = attributes['details']
+                id_ = self.history.get_id_task_event(e)
+                details[id_] = attributes['details']
         return details
 
     def get_workflow_result(self):

@@ -1,4 +1,5 @@
 from floto.decisions import Decision
+import json
 
 
 class StartChildWorkflowExecution(Decision):
@@ -23,7 +24,7 @@ class StartChildWorkflowExecution(Decision):
             attributes['taskList'] = {'name': args['task_list']}
 
         if 'input' in args:
-            attributes['input'] = args['input']
+            attributes['input'] = json.dumps(args['input'])
 
         self.startChildWorkflowExecutionDecisionAttributes = attributes
 
