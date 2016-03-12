@@ -6,7 +6,7 @@ floto is a task orchestration tool based on AWS SWF (Simple Workflow Service) wr
 **Table of Contents**
 
 - [Introduction](#introduction)
-- [Defining the Worklfow's Logics](#defining-the-worklfows-logics)
+- [Defining the Workflow's Logics](#defining-the-workflows-logics)
   - [Decider](#decider)
   - [Decider Specifications](#decider-specifications)
     - [JSON Representation of Decider Specifications](#json-representation-of-decider-specifications)
