@@ -56,9 +56,10 @@ class Swf(object):
 
         return self.client.poll_for_decision_task(**args)
 
-    def poll_for_activity_task(self, domain, task_list):
+    def poll_for_activity_task(self, domain, task_list, identity='NA'):
         args = {'domain': domain,
-                'taskList': {'name': task_list}}
+                'taskList': {'name': task_list},
+                'identity': identity}
         return self.client.poll_for_activity_task(**args)
 
     def register_activity_type(self, swf_type):

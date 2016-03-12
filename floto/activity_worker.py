@@ -1,5 +1,6 @@
 import json
 import logging
+import socket
 import sys
 from inspect import signature
 
@@ -22,18 +23,22 @@ class ActivityWorker:
     my_activity_worker.run()
     """
 
-    def __init__(self, swf=None, task_list=None, domain=None, task_heartbeat_in_seconds=None):
+    def __init__(self, swf=None, task_list=None, domain=None, task_heartbeat_in_seconds=None, identity=None):
         """
         Parameters
         ----------
-        swf: floto.api.Swf()
+        swf: Optional[floto.api.Swf]
             If None a new instance is initiated
-        task_list: str [Required]
+        task_list: str
             The task_list of the activity worker
-        domain: str [Required]
-        task_heartbeat_in_seconds: int
+        domain: str
+        task_heartbeat_in_seconds: Optional[int]
             Heartbeats are sent every <task_heartbeat_in_seconds> to SWF during the execution. If
             set to 0 no heartbeats will be sent. Default is 120.
+        identity: Optional[str]
+            Identity of the worker making the request, recorded in the ActivityTaskStarted event in
+            the workflow history. This enables diagnostic tracing when problems arise. The form of
+            this identity is user defined. Default is the fully qualified domain name.
         """
         self.task_token = None
         self.last_response = None
@@ -45,13 +50,19 @@ class ActivityWorker:
         self.task_list = task_list
         self.domain = domain
         self.task_heartbeat_in_seconds = task_heartbeat_in_seconds
-        if self.task_heartbeat_in_seconds == None:
+        if self.task_heartbeat_in_seconds is None:
             self.task_heartbeat_in_seconds = 120
+
+        self.identity = identity
+        if self.identity is None:
+            self.identity = socket.getfqdn(socket.gethostname())
+
         self.heartbeat_sender = floto.HeartbeatSender()
 
     def poll(self):
         self.last_response = self.swf.poll_for_activity_task(domain=self.domain,
-                                                             task_list=self.task_list)
+                                                             task_list=self.task_list,
+                                                             identity=self.identity)
         if 'taskToken' in self.last_response:
             self.task_token = self.last_response['taskToken']
         else:
