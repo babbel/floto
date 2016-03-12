@@ -11,6 +11,7 @@ from deciders.test_10 import test_10
 from deciders.test_11 import test_11
 from deciders.test_12 import test_12
 from deciders.test_13 import test_13
+from deciders.test_14 import test_14
 
 from activity_worker import ActivityWorkerProcess
 from test_helper import get_activity_result
@@ -128,7 +129,7 @@ def run_13():
 
 
 tests = [run_01, run_02, run_03, run_04, run_05, run_06, run_07, run_08, run_09, run_10, run_11,
-         run_12]
+         run_12, run_13]
 
 try:
     [t() for t in tests]

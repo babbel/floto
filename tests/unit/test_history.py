@@ -80,21 +80,26 @@ class TestHistory():
         assert history.get_events_by_type('foo') == []
 
     def test_get_events_for_decision(self, history):
-        raw_events = [{'eventId':7, 'eventType':'ActivityTaskFailed'},
+        raw_events = [{'eventId':12, 'eventType':'ChildWorkflowExecutionCompleted'},
+                      {'eventId':11, 'eventType':'ChildWorkflowExecutionTerminated'},
+                      {'eventId':10, 'eventType':'ChildWorkflowExecutionCanceled'},
+                      {'eventId':9, 'eventType':'ChildWorkflowExecutionTimedOut'},
+                      {'eventId':8, 'eventType':'ChildWorkflowExecutionFailed'},
+                      {'eventId':7, 'eventType':'ActivityTaskFailed'},
                       {'eventId':6, 'eventType':'DecisionTaskTimedOut'},
                       {'eventId':5, 'eventType':'TimerFired'},
                       {'eventId':4, 'eventType':'ActivityTaskCompleted'},
                       {'eventId':3, 'eventType':'ActivityTaskTimedOut'},
                       {'eventId':2, 'eventType':'ActivityTaskFailed'},
                       {'eventId':1, 'eventType':'ActivityTaskFailed'},
-                      {'eventId':0, 'eventType':'ActivityTaskFailed'}]
+                      {'eventId':0, 'eventType':'WorkflowExecutionStarted'}]
 
         history.events_by_id = {e['eventId']:e for e in raw_events}
-        history.highest_event_id = 7
-        events = history.get_events_for_decision(1,6)
-        assert len(events['faulty']) == 3
-        assert set([e['eventId'] for e in events['faulty']]) == set([1,2,3])
-        assert set([e['eventId'] for e in events['completed']]) == set([4,5])
+        history.highest_event_id = 12
+        events = history.get_events_for_decision(1,12)
+        assert len(events['faulty']) == 8
+        assert set([e['eventId'] for e in events['faulty']]) == set([1,2,3,7,8,9,10,11])
+        assert set([e['eventId'] for e in events['completed']]) == set([4,5,12])
         assert set([e['eventId'] for e in events['decision_failed']]) == set([6])
 
     def test_event_by_activity_id(self, dt1, dt2, empty_response):
@@ -416,6 +421,21 @@ class TestHistory():
     def test_get_task_event_raises(self, history):
         with pytest.raises(ValueError):
             history.get_id_task_event({'eventType':'Unknown'})
+
+    @pytest.mark.parametrize('event_type',['ChildWorkflowExecutionFailed', 
+        'ChildWorkflowExecutionTimedOut',
+        'ChildWorkflowExecutionCanceled',
+        'ChildWorkflowExecutionTerminated'])
+    def test_get_id_task_event(self, history, mocker, event_type):
+        mocker.patch('floto.History.get_id_child_workflow_event', return_value='cw_id')
+        assert history.get_id_task_event({'eventType':event_type}) == 'cw_id'
+
+    def test_get_id_child_workflow_event(self, history):
+        event = {'eventId':3,
+                'eventType':'ChildWorkflowExecutionFailed',
+                'childWorkflowExecutionFailedEventAttributes':{'workflowExecution':
+                    {'workflowId':'wid'}}}
+        assert history.get_id_child_workflow_event(event) == 'wid'
 
     def test_get_id_previous_started(self, empty_response, dt1, dt2):
         started_2 = {'eventId':2,

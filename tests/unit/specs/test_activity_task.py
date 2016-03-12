@@ -14,4 +14,4 @@ class TestActivityTask(object):
 
     def test_init_wo_activity_id(self):
         t = floto.specs.ActivityTask(name='n', version='v')
-        assert t.id_ == t._default_activity_id()
+        assert t.id_ == t._default_id('n', 'v', None)
