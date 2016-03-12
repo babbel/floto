@@ -91,11 +91,11 @@ class TestDecider():
         info = {'executionInfo':{'workflowType':{'name':'wf_name', 'version':'v1'}}}
         mocker.patch('floto.decider.Base.get_workflow_execution_description', return_value=info)
         mocker.patch('floto.api.Swf.start_workflow_execution')
+        mocker.patch('floto.decider.DecisionInput.get_input_workflow', return_value='wf_input')
 
         decider.repeat_workflow = True
         decider.domain = 'd'
         decider.task_list = 'tl'
-        decider.decision_builder = type('obj', (object,), {'workflow_input':'wf_input'})
         decider.tear_down()
 
         expected_args = {'domain':'d',

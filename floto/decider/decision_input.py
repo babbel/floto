@@ -27,7 +27,6 @@ class DecisionInput:
             self._workflow_input = self.history.get_workflow_input()
         return self._workflow_input
 
-    # TODO test with Childworkflow 
     def get_details_failed_tasks(self, failed_tasks_events):
         details = {}
         for e in failed_tasks_events:
@@ -37,7 +36,6 @@ class DecisionInput:
                 details[activity_id] = attributes['details']
         return details
 
-    # TODO test with ChildWorkflow 
     def get_workflow_result(self):
         outgoing_vertices = self._execution_graph.outgoing_vertices()
         result = {}
@@ -68,20 +66,3 @@ class DecisionInput:
         input_ = json.loads(attributes['input']) if 'input' in attributes else None
         return input_
 
-    # TODO remove
-    #def get_input_task_with_dependencies(self, task):
-        #input_ = self.get_input_task(task)
-        #dependencies = self._execution_graph.get_dependencies(task.id_)
-        #for d in dependencies:
-            #result = self.history.get_result_completed_activity(d)
-            #if result:
-                #input_[d.id_] = result
-        #return input_ if input_ else None
-
-    #def _get_input(self, task, input_field_name, add_workflow_input):
-        #input_ = {}
-        #if add_workflow_input:
-            #input_['workflow'] = self.get_input_workflow()
-        #if task.input:
-            #input_[input_field_name] = task.input
-        #return input_

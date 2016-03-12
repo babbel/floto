@@ -127,10 +127,16 @@ def run_13():
     assert [r for r in result.keys() if 'activity1' in r]
     assert [r for r in result.keys() if 'activity2' in r]
 
+def run_14():
+    # Simple test with child workflow
+    result = test_14()
+    print(result)
 
 tests = [run_01, run_02, run_03, run_04, run_05, run_06, run_07, run_08, run_09, run_10, run_11,
          run_12, run_13]
 
+tests = [run_14]
+       
 try:
     [t() for t in tests]
 except (KeyboardInterrupt, SystemExit):

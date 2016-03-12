@@ -350,7 +350,7 @@ class TestHistory():
         assert h.is_timer_task_completed('t_id')
         assert not h._has_next_event_page()
 
-    def test_get_event_task_scheduled_no_event(self, init_response, dt1, dt2):
+    def test_get_event_by_task_id_and_type_no_event(self, init_response, dt1, dt2):
         events = [{'eventId':3, 
                    'eventType':'ActivityTaskCompleted', 
                    'eventTimestamp':dt2,
@@ -363,18 +363,18 @@ class TestHistory():
         init_response['events'] = events
         init_response['previousStartedEventId'] = 1
         h = floto.History(domain='d', task_list='tl', response=init_response)
-        assert not h.get_event_task_scheduled('a_id')
+        assert not h.get_event_by_task_id_and_type('a_id', 'ActivityTaskScheduled')
 
-    def test_get_event_task_scheduled_single_event(self, init_response, dt1):
+    def test_get_event_by_task_id_and_type_single_event(self, init_response, dt1):
         events = [{'eventId':1, 
                    'eventType':'ActivityTaskScheduled', 
                    'eventTimestamp':dt1,
                    'activityTaskScheduledEventAttributes':{'activityId':'a_id'}}]
         init_response['events'] = events
         h = floto.History(domain='d', task_list='tl', response=init_response)
-        assert h.get_event_task_scheduled('a_id')['eventId'] == 1
+        assert h.get_event_by_task_id_and_type('a_id', 'ActivityTaskScheduled')['eventId'] == 1
 
-    def test_get_event_task_scheduled_several_events(self, init_response, dt1, dt2):
+    def test_get_event_by_task_id_several_events(self, init_response, dt1, dt2):
         events = [{'eventId':2,
                    'eventType':'ActivityTaskScheduled',
                    'eventTimestamp':dt2,
@@ -385,9 +385,9 @@ class TestHistory():
                    'activityTaskScheduledEventAttributes':{'activityId':'a_id_1'}}]
         init_response['events'] = events
         h = floto.History(domain='d', task_list='tl', response=init_response)
-        assert h.get_event_task_scheduled('a_id_2')
+        assert h.get_event_by_task_id_and_type('a_id_2', 'ActivityTaskScheduled')['eventId'] == 2
 
-    def test_get_event_task_scheduled_next_page(self, mocker, page1_response, page2_response):
+    def test_get_event_by_task_id_and_type_next_page(self, mocker, page1_response, page2_response):
         events = [{'eventId':1, 
                    'eventType':'ActivityTaskScheduled', 
                    'eventTimestamp':dt1,
@@ -398,7 +398,7 @@ class TestHistory():
         swf_mock.pages['page2'] = page2_response
         mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=swf_mock)
         h = floto.History(domain='d', task_list='tl', response=page1_response)
-        assert h.get_event_task_scheduled('a_id')['eventId'] == 1
+        assert h.get_event_by_task_id_and_type('a_id', 'ActivityTaskScheduled')['eventId'] == 1
 
     @pytest.mark.parametrize('type_', [('ActivityTaskFailed'),
                                        ('ActivityTaskTimedOut'),
@@ -429,6 +429,12 @@ class TestHistory():
     def test_get_id_task_event(self, history, mocker, event_type):
         mocker.patch('floto.History.get_id_child_workflow_event', return_value='cw_id')
         assert history.get_id_task_event({'eventType':event_type}) == 'cw_id'
+
+    def test_get_id_start_child_workflow_execution_initiated(self, history):
+        event = {'eventId':3,
+                'eventType':'StartChildWorkflowExecutionInitiated',
+                'startChildWorkflowExecutionInitiatedEventAttributes':{'workflowId':'wid'}}
+        assert history.get_id_start_child_workflow_execution_initiated(event) == 'wid'
 
     def test_get_id_child_workflow_event(self, history):
         event = {'eventId':3,
@@ -562,6 +568,19 @@ class TestHistory():
                 allow_read_next_event_page=False)
         assert activity_id == None
 
+    def test_get_number_activity_failures_activity_task(self, history, mocker):
+        mocker.patch('floto.History.get_number_activity_task_failures')
+        history.get_number_activity_failures(floto.specs.ActivityTask(activity_id='tid'))
+        history.get_number_activity_task_failures.assert_called_once_with('tid')
+
+    def test_get_number_activity_failures_child_workflow(self, history, mocker):
+        mocker.patch('floto.History.get_number_child_workflow_failures')
+        history.get_number_activity_failures(floto.specs.ChildWorkflow(workflow_id='wid'))
+        history.get_number_child_workflow_failures.assert_called_once_with('wid')
+
+    def test_get_number_activity_failures_unknown_type(self, history):
+        assert history.get_number_activity_failures('task') == 0
+
     def test_get_number_activity_task_failures(self, empty_response, dt1, dt2, dt3):
         activity_task_timed_out_event = {'eventId':3,
                 'eventType':'ActivityTaskTimedOut',
@@ -582,7 +601,8 @@ class TestHistory():
         h = floto.History(domain='d', task_list='tl', response=empty_response)
         assert h.get_number_activity_task_failures('a_id') == 2
 
-    def test_get_number_activity_task_failures_after_completed(self, empty_response, dt1, dt2, dt3, dt4, dt5):
+    def test_get_number_activity_task_failures_after_completed(self, empty_response, dt1, dt2, dt3,
+            dt4, dt5):
         activity_task_failed_event = {'eventId':5,
                 'eventType':'ActivityTaskFailed',
                 'eventTimestamp':dt5,
@@ -618,9 +638,8 @@ class TestHistory():
         h = floto.History(domain='d', task_list='tl', response=empty_response)
         assert h.get_number_activity_task_failures('a_id') == 1
 
-    def test_get_number_activity_task_failures_after_completed_two_pages(self, page1_response, page2_response,
-            dt1, dt2, dt3, dt4, dt5, dt6, mocker):
-
+    def test_get_number_activity_task_failures_after_completed_two_pages(self, page1_response, 
+            page2_response, dt1, dt2, dt3, dt4, dt5, dt6, mocker):
         activity_task_failed_event = {'eventId':7,
                 'eventType':'ActivityTaskFailed',
                 'eventTimestamp':dt6,
@@ -669,6 +688,64 @@ class TestHistory():
 
         h = floto.History(domain='d', task_list='tl', response=page1_response)
         assert h.get_number_activity_task_failures('a_id') == 2
+
+    def test_get_number_child_workflow_failures(self, empty_response, dt1, dt2, dt3):
+        child_workflow_timed_out_event = {'eventId':3,
+                'eventType':'ChildWorkflowExecutionTimedOut',
+                'eventTimestamp':dt3,
+                'childWorkflowExecutionTimedOutEventAttributes':
+                    {'workflowExecution':{'workflowId':'wid'}}}
+
+        child_workflow_failed_event = {'eventId':2,
+                'eventType':'ChildWorkflowExecutionFailed',
+                'eventTimestamp':dt2,
+                'childWorkflowExecutionFailedEventAttributes':
+                    {'workflowExecution':{'workflowId':'wid'}}}
+
+        child_workflow_initiated_event = {'eventId':1,
+                   'eventType':'StartChildWorkflowExecutionInitiated',
+                   'eventTimestamp':dt1,
+                   'startChildWorkflowExecutionInitiatedEventAttributes':{'workflowId':'wid'}}
+
+        events = [child_workflow_timed_out_event,
+                  child_workflow_failed_event,
+                  child_workflow_initiated_event]
+        empty_response['events'] = events 
+        h = floto.History(domain='d', task_list='tl', response=empty_response)
+        assert h.get_number_child_workflow_failures('wid') == 2
+
+    def test_get_number_child_workflow_failures_after_completion(self, empty_response, dt1, dt2, 
+            dt3, dt4):
+        child_workflow_timed_out_event = {'eventId':4,
+                'eventType':'ChildWorkflowExecutionTimedOut',
+                'eventTimestamp':dt4,
+                'childWorkflowExecutionTimedOutEventAttributes':
+                    {'workflowExecution':{'workflowId':'wid'}}}
+
+        child_workflow_completed_event = {'eventId':3,
+                'eventType':'ChildWorkflowExecutionCompleted',
+                'eventTimestamp':dt3,
+                'childWorkflowExecutionCompletedEventAttributes':
+                    {'workflowExecution':{'workflowId':'wid'}}}
+
+        child_workflow_failed_event = {'eventId':2,
+                'eventType':'ChildWorkflowExecutionFailed',
+                'eventTimestamp':dt2,
+                'childWorkflowExecutionFailedEventAttributes':
+                    {'workflowExecution':{'workflowId':'wid'}}}
+
+        child_workflow_initiated_event = {'eventId':1,
+                   'eventType':'StartChildWorkflowExecutionInitiated',
+                   'eventTimestamp':dt1,
+                   'startChildWorkflowExecutionInitiatedEventAttributes':{'workflowId':'wid'}}
+
+        events = [child_workflow_timed_out_event,
+                  child_workflow_completed_event,
+                  child_workflow_failed_event,
+                  child_workflow_initiated_event]
+        empty_response['events'] = events 
+        h = floto.History(domain='d', task_list='tl', response=empty_response)
+        assert h.get_number_child_workflow_failures('wid') == 1
 
     def test_get_workflow_input(self, history):
         assert history.get_workflow_input() == 'workflow_input' 

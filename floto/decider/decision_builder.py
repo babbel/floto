@@ -26,7 +26,6 @@ class DecisionBuilder:
         decisions = self._collect_decisions(first_event_id, last_event_id)
         return decisions
 
-    #TODO test
     def _set_history(self, history):
         self.history = history
         self.decision_input.history = history
@@ -55,23 +54,11 @@ class DecisionBuilder:
             decisions.extend(self.get_decisions_decision_failed(events['decision_failed']))
         return decisions
 
-    # TODO test
     def get_decisions_after_workflow_start(self):
         decisions = []
         tasks = self.execution_graph.get_first_tasks()
         for t in tasks:
             decision = self.get_decision_schedule_activity(t)
-            #if isinstance(t, floto.specs.ActivityTask):
-                #input_ = self.decision_input.get_input_task(t, add_workflow_input=True)
-                #decision = self.get_decision_schedule_activity_task(activity_task=t, input=input_)
-            #elif isinstance(t, floto.specs.Timer):
-                #decision = self.get_decision_start_timer(t)
-            #elif isinstance(t, floto.specs.ChildWorkflow):
-                #input_ = self.decision_input.get_input_task(t, add_workflow_input=True)
-                #decision = self.get_decision_start_child_workflow_execution(child_workflow_task=t,
-                        #input_=input_)
-            #else:
-                #raise ValueError('Unknown task type: {}'.format(t))
             decisions.append(decision)
         return decisions
 
@@ -100,8 +87,6 @@ class DecisionBuilder:
             if t.retry_strategy:
                 failures = self.history.get_number_activity_failures(t)
                 if t.retry_strategy.is_task_resubmitted(failures):
-                    # TODO test 
-                    # TODO current marker
                     decision = self.get_decision_schedule_activity(t, is_failed_task=True)
                     decisions.append(decision)
                 else:
@@ -143,7 +128,6 @@ class DecisionBuilder:
         self.workflow_complete = True
         return [d]
 
-    # TODO test
     def get_decision_schedule_activity(self, task, is_failed_task=False):
         if isinstance(task, floto.specs.ActivityTask):
             input_ = self.decision_input.get_input_task(task, is_failed_task)
@@ -161,23 +145,6 @@ class DecisionBuilder:
         d = floto.decisions.FailWorkflowExecution(details=details, reason=reason)
         self.workflow_fail = True
         return [d]
-
-    # TODO remove
-    #def get_decision_task(self, task):
-        #"""Return a single decision for an ActivityTask or a Timer
-        #Parameters
-        #----------
-        #task: floto.specs.ActivityTask or floto.specs.Timer
-
-        #Returns
-        #-------
-        #floto.decision.ScheduleActivityTask of floto.decision.StartTimer
-        #"""
-        #if isinstance(task, floto.specs.ActivityTask):
-            #input_ = self.decision_input.get_input_task_with_dependencies(task)
-            #return self.get_decision_schedule_activity_task(task, input_)
-        #elif isinstance(task, floto.specs.Timer):
-            #return self.get_decision_start_timer(task)
 
     def get_decision_schedule_activity_task(self, activity_task=None, input=None):
         activity_type = floto.api.ActivityType(name=activity_task.name,

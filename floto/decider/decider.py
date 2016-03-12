@@ -55,9 +55,10 @@ class Decider(Base):
                     'workflow_type_name': execution_info['workflowType']['name'],
                     'workflow_type_version': execution_info['workflowType']['version'],
                     'task_list': self.task_list,
-                    'input': self.decision_builder.workflow_input}
+                    'input': self.decision_builder.decision_input.get_input_workflow()}
             self.swf.start_workflow_execution(**args)
             self.terminate_workflow = False
             self.terminate_decider = False
         else:
             self.terminate_decider = True
+

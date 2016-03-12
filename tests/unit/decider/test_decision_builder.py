@@ -55,6 +55,11 @@ class TestDecisionBuilder(object):
         assert builder.get_decisions(history) == ['d']
         builder._collect_decisions.assert_called_once_with(0,3)
 
+    def test_set_history(self, builder):
+        builder._set_history('history')
+        assert builder.history == 'history'
+        assert builder.decision_input.history == 'history'
+
     @pytest.mark.parametrize('failed, completed, is_terminate',
             [(False, False, False),
              (False, True, True),
@@ -137,7 +142,6 @@ class TestDecisionBuilder(object):
                            'activityTaskScheduledEventAttributes':{}}
         mocker.patch('floto.History.get_id_activity_task_event', return_value='a_id')
         mocker.patch('floto.History.get_number_activity_task_failures', return_value=2)
-        mocker.patch('floto.History.get_event_task_scheduled', return_value=scheduled_event)
         builder.execution_graph._tasks_by_id = {'a_id':task_1}
         builder._set_history(empty_history)
         task_failed_event = {'eventId':4,
@@ -159,7 +163,6 @@ class TestDecisionBuilder(object):
                            'activityTaskScheduledEventAttributes':{}}
         mocker.patch('floto.History.get_id_activity_task_event', return_value='a_id')
         mocker.patch('floto.History.get_number_activity_task_failures', return_value=2)
-        mocker.patch('floto.History.get_event_task_scheduled', return_value=scheduled_event)
         builder.execution_graph._tasks_by_id = {'a_id':task_1}
         builder._set_history(empty_history)
         task_failed_event = {'eventId':4,

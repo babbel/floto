@@ -62,6 +62,17 @@ class TestDecisionInput:
     def test_get_input_task_unknow_type(self, di):
         assert not di.get_input_task('task')
 
+    def test_get_input_workflow(self, di, mocker):
+        mocker.patch('floto.History.get_workflow_input', return_value='wf_input')
+        di._workflow_input = None
+        i = di.get_input_workflow()
+        assert i == 'wf_input'
+
+    def test_store_input_workflow(self, di, mocker):
+        di._workflow_input = 'wf_input_stored'
+        i = di.get_input_workflow()
+        assert i == 'wf_input_stored'
+
     def test_get_input(self, di, task_1):
         i = di._get_input(task_1, 'activity_task')
         assert i['activity_task'] == {'task_1':'val'}
@@ -77,17 +88,6 @@ class TestDecisionInput:
         i = di._get_input(task_1, 'activity_task')
         assert i['activity_task'] == {'task_1':'val'}
         assert i['workflow'] == {'wf':'input'}
-
-    def test_get_input_workflow(self, di, mocker):
-        mocker.patch('floto.History.get_workflow_input', return_value='wf_input')
-        di._workflow_input = None
-        i = di.get_input_workflow()
-        assert i == 'wf_input'
-
-    def test_store_input_workflow(self, di, mocker):
-        di._workflow_input = 'wf_input_stored'
-        i = di.get_input_workflow()
-        assert i == 'wf_input_stored'
 
     def test_get_input_scheduled_task(self, di, mocker):
         scheduled_event = {'eventId':2, 

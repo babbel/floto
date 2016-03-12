@@ -103,15 +103,9 @@ class History:
         decider_events['decision_failed'] = decision_failed_events
         return decider_events
 
-    # TODO test, eventually remove
-    def get_event_task_scheduled(self, activity_id):
-        """The latest ActivityTaskScheduled for corresponding activity_id. None if it does not
-        exist.
-        """
-        return self.get_event_by_task_id_and_type(activity_id, 'ActivityTaskScheduled')
-
-    # TODO test
     def get_event_by_task_id_and_type(self, id_, type_):
+        """Returns the latest event of type <type_> for id_.
+        Returns None if no matching event is found."""
         events = self.get_events_by_task_id_and_type(id_, type_)
         if events:
             return events[0]
@@ -135,6 +129,7 @@ class History:
                  'ActivityTaskScheduled': self.get_id_activity_task_scheduled,
                  'TimerStarted': self.get_id_timer_fired_event,
                  'TimerFired': self.get_id_timer_fired_event,
+                 'ChildWorkflowExecutionCompleted': self.get_id_child_workflow_event,
                  'ChildWorkflowExecutionFailed': self.get_id_child_workflow_event,
                  'ChildWorkflowExecutionTimedOut': self.get_id_child_workflow_event,
                  'ChildWorkflowExecutionCanceled': self.get_id_child_workflow_event,
@@ -178,7 +173,6 @@ class History:
     def get_id_activity_task_scheduled(self, event, allow_read_next_event_page=True):
         return event['activityTaskScheduledEventAttributes']['activityId']
 
-    # TODO test
     def get_id_start_child_workflow_execution_initiated(self, event, allow_read_next_page=True):
         attributes = self.get_event_attributes(event)
         id_ = attributes['workflowId']
@@ -189,16 +183,14 @@ class History:
         id_ = attributes['workflowExecution']['workflowId']
         return id_
 
-    # Test
     def get_number_activity_failures(self, task):
         if isinstance(task, floto.specs.ActivityTask):
             return self.get_number_activity_task_failures(task.id_)
         elif isinstance(task, floto.specs.ChildWorkflow):
-            return self.get_nubmer_child_workflow_failures(task.id_)
+            return self.get_number_child_workflow_failures(task.id_)
         else:
             return 0
 
-    # Test
     def get_number_activity_task_failures(self, activity_id):
         """Number of failed executions of activity task"""
         dt = self.get_datetime_activity_completed(activity_id, 'ActivityTaskCompleted')
@@ -211,7 +203,6 @@ class History:
 
         return failed_since_completion + timed_out_since_completion
 
-    # Test
     def get_number_child_workflow_failures(self, id_):
         dt = self.get_datetime_activity_completed(id_, 'ChildWorkflowExecutionCompleted')
         failed_event_types = ['ChildWorkflowExecutionFailed',
@@ -219,21 +210,14 @@ class History:
                 'ChildWorkflowExecutionCanceled',
                 'ChildWorkflowExecutionTerminated']
         failed_events = [self.get_events_by_task_id_and_type(id_, t) for t in failed_event_types]
-        return len([e for events in failed_events for e in events if e['eventTimestamp']>dt])
+        failed_events = [e for events in failed_events for e in events]
+        current_failures = [e for e in failed_events if e['eventTimestamp']>dt]
+        return len(current_failures)
 
     def get_datetime_previous_decision(self):
         """The datetime of the previous decision. If there has not been a previous decision task,
         the datetime of the workflow start is returned."""
         dt = None
-        # if self.get_events_by_type('DecisionTaskCompleted'):
-        # dt = self.get_events_by_type('DecisionTaskCompleted')[0]['eventTimestamp']
-        # elif self._has_next_event_page():
-        # self._read_next_event_page()
-        # dt = self.get_datetime_previous_decision()
-        # else:
-        # dt = self.get_event(1)['eventTimestamp']
-        # return dt
-
         if self.previous_decision_id:
             if self.lowest_event_id <= self.previous_decision_id <= self.highest_event_id:
                 dt = self.events_by_id[self.previous_decision_id]['eventTimestamp']
@@ -254,7 +238,7 @@ class History:
             return events[0]['eventTimestamp']
         elif self._has_next_event_page():
             self._read_next_event_page()
-            return self.get_datetime_activity_completed(activity_id)
+            return self.get_datetime_activity_completed(id_, type_)
         return self.get_event(1)['eventTimestamp']
 
     def get_workflow_input(self):
@@ -343,16 +327,20 @@ class History:
             return self.is_activity_task_completed(activity_id)
         return False
 
+    # TODO test
     def is_child_workflow_completed(self, workflow_id):
-        initiated = self.get_events_by_task_id_and_type(activity_id, 'ActivityTaskScheduled')
-        if scheduled:
-            completed = self.get_events_by_task_id_and_type(activity_id, 'ActivityTaskCompleted')
-            if completed and completed[0]['eventTimestamp'] > scheduled[0]['eventTimestamp']:
+        initiated = self.get_events_by_task_id_and_type(workflow_id, 
+                'StartChildWorkflowExecutionInitiated')
+        if initiated:
+            completed = self.get_events_by_task_id_and_type(workflow_id, 
+                    'ChildWorkflowExecutionCompleted')
+            if completed and completed[0]['eventTimestamp'] > initiated[0]['eventTimestamp']:
                 return True
         elif self._has_next_event_page():
             self._read_next_event_page()
-            return self.is_activity_task_completed(activity_id)
+            return self.is_child_workflow_completed(workflow_id)
         return False
+
     def _read_events_up_to_last_decision(self, response):
         self._read_event_page(response['events'])
         self.dt_previous_decision_task = self.get_datetime_previous_decision()
@@ -369,7 +357,6 @@ class History:
 
         self._fill_events_by_activity_id_for_types(max_event_id=events[0]['eventId'])
 
-    # Test for child workflow types
     def _fill_events_by_activity_id_for_types(self, max_event_id):
         types = ['ActivityTaskCompleted',
                  'ActivityTaskFailed',
@@ -378,7 +365,7 @@ class History:
                  'TimerStarted',
                  'TimerFired',
                  'StartChildWorkflowExecutionInitiated',
-                 'ChildWorkflowExectionCompleted',
+                 'ChildWorkflowExecutionCompleted',
                  'ChildWorkflowExecutionFailed',
                  'ChildWorkflowExecutionTimedOut',
                  'ChildWorkflowExecutionCanceled',
