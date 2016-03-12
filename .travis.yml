@@ -4,6 +4,7 @@ sudo: false
 # We don't care about Travis' python versions, we install conda anyway
 env:
   - CONDA_PYTHON_VERSION=3.5
+  - AWS_DEFAULT_REGION=eu-west-1
 
 before_install:
   # Install conda
