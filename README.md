@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/babbel/floto.svg?branch=master)](https://travis-ci.com/babbel/floto)
+
 # floto
 floto is a task orchestration tool based on AWS SWF (Simple Workflow Service) written in Python. It uses Python 3 and boto3, the AWS SDK for Python.
 
@@ -60,7 +62,7 @@ activity_task_b = ActivityTask(name='ActivityB', version='v1')
 activity_task_c = ActivityTask(name='ActivityC', version='v1', requires=[activity_task_a, activity_task_b])
 
 decider_spec = DeciderSpec(domain='your_domain',
-                           task_list='your_decider_task_list'),
+                           task_list='your_decider_task_list',
                            activity_task_list='your_activity_task_list',
                            activity_tasks=[activity_task_a, activity_task_b, activity_task_c])
 
