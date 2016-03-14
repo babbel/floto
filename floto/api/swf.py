@@ -48,7 +48,8 @@ class Swf(object):
 
         args = {'domain': domain,
                 'taskList': {'name': task_list},
-                'reverseOrder': True}
+                'reverseOrder': True
+                }
         if page_token:
             args['nextPageToken'] = page_token
 
