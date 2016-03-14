@@ -8,9 +8,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------- #
 # Create Activity Tasks and Decider
 # ---------------------------------- #
-rs = floto.specs.retry_strategy.InstantRetry(retries=2)
-a2 = ActivityTask(name='demo_step2', version='v2', retry_strategy=rs)
-
 decider_spec = DeciderSpec(domain='floto_test',
                            task_list='demo_step_decisions_child',
                            activity_task_list='demo_step_activities_philipp',
