@@ -34,7 +34,12 @@ class Decider(Base):
         self.repeat_workflow = self.decider_spec.repeat_workflow
         self.activity_task_list = self.decider_spec.activity_task_list or 'floto_activities'
 
-        activity_tasks = self.decider_spec.activity_tasks
+        self.decision_builder = None
+
+        if self.decider_spec.activity_tasks:
+            self._init_decision_builder(self.decider_spec.activity_tasks)
+
+    def _init_decision_builder(self, activity_tasks):
         execution_graph = floto.decider.ExecutionGraph(activity_tasks)
         self.decision_builder = floto.decider.DecisionBuilder(execution_graph,
                                                               self.activity_task_list)
