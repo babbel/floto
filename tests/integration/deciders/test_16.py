@@ -20,7 +20,7 @@ def decider_spec_child_workflow():
     return decider_spec
 
 def decider_spec_workflow():
-    rs = InstantRetry(retries=1)
+    rs = InstantRetry(retries=3)
     child_workflow = ChildWorkflow(workflow_type_name='test_child_workflow', 
             workflow_type_version='v2', retry_strategy=rs, task_list='child_workflow_task_list')
     decider_spec = DeciderSpec(domain='floto_test',

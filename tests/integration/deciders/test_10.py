@@ -9,8 +9,8 @@ from floto.specs import ActivityTask, DeciderSpec
 
 
 def test_10():
-    rs = floto.specs.retry_strategy.InstantRetry(retries=7)
-    activity_task = ActivityTask(name='activity5', version='v1', retry_strategy=rs)
+    rs = floto.specs.retry_strategy.InstantRetry(retries=2)
+    activity_task = ActivityTask(name='activity5', version='v2', retry_strategy=rs)
 
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),

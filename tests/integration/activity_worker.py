@@ -13,7 +13,6 @@ def activity1(context):
     print('activity1_v5 finished' + 20 * '.')
     return result
 
-
 @floto.activity(name='activity2', version='v4')
 def activity2():
     print('activity2 started' + 20 * '.')
@@ -72,30 +71,20 @@ def activity_4(context):
     return context
 
 
-TIMEOUT_COUNT_1 = 0
-
-
-@floto.activity(name='activity5', version='v1')
+@floto.activity(name='activity5', version='v2')
 def activity_5():
     print('activity_5 started' + 20 * '.')
-    global TIMEOUT_COUNT_1
-    TIMEOUT_COUNT_1 += 1
-    result = {'sleep_time': 0}
-    if TIMEOUT_COUNT_1 <= 1:
-        print('activity_5 sleeping for 2 seconds' + 20 * '.')
-        time.sleep(2)
-        result['sleep_time'] = 2
-    else:
-        TIMEOUT_COUNT_1 = 0
+    print('Sleeping for 30s.')
+    time.sleep(30)
     print('activity_5 finished' + 20 * '.')
-    return result
+    return {'status':'finished'}
 
 
 class ActivityWorkerProcess(object):
     def __init__(self, domain, task_list):
         self._process = None
-        self.worker = floto.ActivityWorker(domain=domain, task_list=task_list)
-        self.worker.heartbeat = 2
+        self.worker = floto.ActivityWorker(domain=domain, task_list=task_list, 
+            task_heartbeat_in_seconds=5)
 
     def start(self):
         self._process = mp.Process(target=self.worker.run)

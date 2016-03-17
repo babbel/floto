@@ -1,0 +1,14 @@
+# Start the decider daemon
+python examples/decider_daemon/daemon.py
+
+# Start the decider daemon workflow
+python examples/decider_daemon/start_decider_daemon_workflow.py
+
+# Start the decider which runs the workflow and signals a workflow execution to the daemon
+python examples/decider_daemon/decider.py
+
+# Start the worker
+python examples/decider_daemon/activities.py
+
+# Start the workflow execution
+python examples/decider_daemon/start_workflow.py

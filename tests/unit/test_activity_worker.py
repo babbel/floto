@@ -188,10 +188,6 @@ class TestActivityWorkerAPICalls:
         worker.stop_heartbeat.assert_called_once_with()
 
     def test_run_start_stop_heartbeats_with_non_existing_activity(self, mocker):
-        """
-        TODO: what's the expected behaviour? Stop heartbeat only
-
-        """
         failing_task = {'activityType': {'name': 'activity_unknown', 'version': 'v1'},
                         'taskToken': 'the_task_token'}
         mocker.patch('floto.ActivityWorker.task_failed')
@@ -202,7 +198,6 @@ class TestActivityWorkerAPICalls:
         worker.max_polls = 1
         worker.run()
         worker.start_heartbeat.assert_not_called()
-        worker.stop_heartbeat.assert_called_once_with()
 
     def test_start_heartbeat_deactivation(self):
         worker = floto.ActivityWorker(task_heartbeat_in_seconds=0)

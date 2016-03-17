@@ -16,6 +16,7 @@ from deciders.test_13 import test_13
 from deciders.test_14 import test_14
 from deciders.test_15 import test_15
 from deciders.test_16 import test_16
+from deciders.test_17 import test_17
 from test_helper import get_activity_result, docprint
 
 from activity_worker import ActivityWorkerProcess
@@ -149,14 +150,13 @@ def run_09():
 @docprint
 def run_10():
     """Test 10
-    Activity fails several times due to heartbeat timeout, succeeds after retry
-    Might print warnings
+    Testing heartbeat: Heartbeat(20s) < execution time of activity5_v2 (30s)
     """
 
     result = test_10()
-    result = get_activity_result(result, 'activity5', 'v1')
+    result = get_activity_result(result, 'activity5', 'v2')
     print('Result: ' + json.dumps(result) + '\n')
-    assert result['sleep_time'] == 0
+    assert result['status'] == 'finished'
 
 
 @docprint
@@ -232,7 +232,6 @@ def run_16():
     result = get_activity_result(result, 'test_child_workflow', 'v2')
     print('Result: ' + json.dumps(result) + '\n')
     assert result
-
 
 tests = [run_01, run_02, run_03, run_04, run_05, run_06, run_07, run_08, run_09, run_10, run_11,
          run_12, run_13, run_14, run_15, run_16]

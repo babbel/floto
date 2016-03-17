@@ -23,7 +23,8 @@ class ActivityWorker:
     my_activity_worker.run()
     """
 
-    def __init__(self, swf=None, task_list=None, domain=None, task_heartbeat_in_seconds=None, identity=None):
+    def __init__(self, swf=None, task_list=None, domain=None, task_heartbeat_in_seconds=None, 
+            identity=None):
         """
         Parameters
         ----------

@@ -191,8 +191,7 @@ class TestHistory():
         h = floto.History(domain='d', task_list='tl', response=empty_response)
         assert h.get_datetime_previous_decision() == dt1
 
-    def test_get_datetime_previous_decision_contained_in_page(self, empty_response, dt1, dt2, dt3,
-            dt4):
+    def test_get_datetime_previous_decision_contained_in_page(self, empty_response, dt1, dt2):
         events = [ { 'eventId': 2,
                      'eventTimestamp': dt2,
                      'eventType': 'DecisionTaskStarted'},
@@ -213,6 +212,12 @@ class TestHistory():
         h = floto.History(domain='d', task_list='tl', response=page1_decision_response)
         dt1 =  datetime.datetime(2016, 1, 12, hour=1, tzinfo=datetime.timezone.utc)
         h.get_datetime_previous_decision() == dt1
+
+    def test_get_datetime_last_event_of_activitiy(self, mocker, history, dt1):
+        event = {'eventTimestamp':dt1}
+        mocker.patch('floto.History.get_events_by_task_id_and_type', return_value=[event])
+        assert history.get_datetime_last_event_of_activity('a_id', 'TaskCompleted') == dt1
+        history.get_events_by_task_id_and_type.assert_called_once_with('a_id', 'TaskCompleted')
 
     def test_read_events_up_to_last_decision(self, mocker, page1_decision_response,
             page2_decision_response):
@@ -296,6 +301,11 @@ class TestHistory():
         timer = floto.specs.Timer()
         assert history.is_task_completed(timer)
 
+    def test_task_complete_with_child_workflow(self, mocker, history):
+        mocker.patch('floto.History.is_child_workflow_completed', return_value=True)
+        cw = floto.specs.ChildWorkflow()
+        assert history.is_task_completed(cw)
+
     def test_is_task_completed_raises(self, history):
         with pytest.raises(ValueError):
             history.is_task_completed('foo')
@@ -349,6 +359,19 @@ class TestHistory():
         assert h._has_next_event_page()
         assert h.is_timer_task_completed('t_id')
         assert not h._has_next_event_page()
+
+    def test_is_child_workflow_completed(self, mocker, dt1, dt2, history):
+        completed_event = {'eventType':'ChildWorkflowExecutionCompleted',
+                'eventTimestamp':dt2}
+        initiated_event = {'eventType':'StartChildWorkflowExecutionInitiated',
+                'eventTimestamp':dt1}
+
+        events = {'ChildWorkflowExecutionCompleted':[completed_event],
+                'StartChildWorkflowExecutionInitiated': [initiated_event]}
+
+        mock_fct = lambda id_, type_: events[type_]
+        history.get_events_by_task_id_and_type = mock_fct
+        assert history.is_child_workflow_completed('wid')
 
     def test_get_event_by_task_id_and_type_no_event(self, init_response, dt1, dt2):
         events = [{'eventId':3, 
@@ -425,9 +448,16 @@ class TestHistory():
     @pytest.mark.parametrize('event_type',['ChildWorkflowExecutionFailed', 
         'ChildWorkflowExecutionTimedOut',
         'ChildWorkflowExecutionCanceled',
-        'ChildWorkflowExecutionTerminated'])
-    def test_get_id_task_event(self, history, mocker, event_type):
+        'ChildWorkflowExecutionTerminated',
+        'ChildWorkflowExecutionCompleted'])
+    def test_get_id_task_event_child_workflow_event(self, history, mocker, event_type):
         mocker.patch('floto.History.get_id_child_workflow_event', return_value='cw_id')
+        assert history.get_id_task_event({'eventType':event_type}) == 'cw_id'
+
+    def test_get_id_task_event_child_workflow_initiated(self, history, mocker):
+        mocker.patch('floto.History.get_id_start_child_workflow_execution_initiated', 
+                return_value='cw_id')
+        event_type = 'StartChildWorkflowExecutionInitiated'
         assert history.get_id_task_event({'eventType':event_type}) == 'cw_id'
 
     def test_get_id_start_child_workflow_execution_initiated(self, history):

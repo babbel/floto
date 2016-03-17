@@ -27,7 +27,6 @@ class DeciderSpec:
         self.activity_tasks = activity_tasks
         self.activity_task_list = activity_task_list
         self.repeat_workflow = repeat_workflow
-        # TODO test
         self.terminate_decider_after_completion = terminate_decider_after_completion
 
     def to_json(self):

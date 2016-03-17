@@ -33,7 +33,7 @@ class DecisionInput:
             attributes = self.history.get_event_attributes(e)
             if 'details' in attributes:
                 id_ = self.history.get_id_task_event(e)
-                details[id_] = attributes['details']
+                details[id_] = floto.specs.JSONEncoder.load_string(attributes['details'])
         return details
 
     def get_workflow_result(self):
