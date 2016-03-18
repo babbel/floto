@@ -1,17 +1,17 @@
 import floto
 import floto.decisions
 import floto.specs
-
+import json
 
 class DecisionBuilder:
-    def __init__(self, execution_graph, activity_task_list):
+    def __init__(self, activity_tasks, activity_task_list):
         self.workflow_fail = False
         self.workflow_complete = False
-        self.execution_graph = execution_graph
+        self.execution_graph = floto.decider.ExecutionGraph(activity_tasks) 
         self.history = None
         self.activity_task_list = activity_task_list
         self.current_workflow_execution_description = None
-        self.decision_input = floto.decider.DecisionInput(execution_graph=execution_graph)
+        self.decision_input = floto.decider.DecisionInput(execution_graph=self.execution_graph)
 
     def get_decisions(self, history):
         self._set_history(history)
@@ -104,6 +104,7 @@ class DecisionBuilder:
         events: list
             List of ActivityTaskCompleted or TimerFired events
         """
+        self._update_execution_graph(events)
         task_ids = [self.history.get_id_task_event(e) for e in events]
         tasks = self.get_tasks_to_be_scheduled(task_ids)
 
@@ -169,6 +170,8 @@ class DecisionBuilder:
 
     def all_workflow_tasks_finished(self, completed_tasks):
         """Return True if all tasks of this workflow have finished, False otherwise."""
+        if self.completed_contain_generator(completed_tasks):
+            return False
         if self.completed_have_depending_tasks(completed_tasks):
             return False
         if self.open_task_counts():
@@ -176,6 +179,12 @@ class DecisionBuilder:
         if not self.outgoing_vertices_completed():
             return False
         return True
+
+    def completed_contain_generator(self, completed_tasks):
+        for task in completed_tasks:
+            id_ = self.history.get_id_task_event(task)
+            if isinstance(self.execution_graph.tasks_by_id[id_], floto.specs.Generator):
+                return True
 
     def completed_have_depending_tasks(self, completed_tasks):
         """Return True if any of the tasks in "completed_tasks" has a task which depends on it.
@@ -240,3 +249,18 @@ class DecisionBuilder:
 
     def uniqify_activity_tasks(self, activity_tasks):
         return list({t.id_: t for t in activity_tasks}.values())
+
+    # TODO test
+    def _update_execution_graph(self, completed_events):
+        activity_ids = [self.history.get_id_task_event(e) for e in completed_events 
+                if e['eventType'] == 'ActivityTaskCompleted']
+        activities = [self.execution_graph.tasks_by_id[id_] for id_ in activity_ids]
+        generators = [g for g in activities if isinstance(g, floto.specs.Generator)]
+        print('marker')
+        print(activity_ids)
+        for g in generators:
+            new_tasks_json = json.dumps(self.history.get_result_completed_activity(g))
+            new_tasks = json.loads(new_tasks_json, object_hook=floto.specs.JSONEncoder.object_hook)
+            self.execution_graph.update(g, new_tasks)
+            self.decision_input.execution_graph = self.execution_graph
+

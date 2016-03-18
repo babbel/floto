@@ -1,15 +1,28 @@
+import pytest
+import json
 from inspect import signature
 from unittest.mock import PropertyMock, Mock
 
 import floto.api
 
-activity_task = {'activityId': 'my_activity_id',
-                 'activityType': {'name': 'my_activity_type', 'version': 'v1'},
-                 'startedEventId': 7,
-                 'taskToken': 'the_task_token',
-                 'workflowExecution': {'runId': 'the_run_id',
-                                       'workflowId': 'the_workflow_id'}}
+@pytest.fixture
+def activity_task():
+    return {'activityId': 'my_activity_id',
+            'activityType': {'name': 'my_activity_type', 'version': 'v1'},
+            'startedEventId': 7,
+            'taskToken': 'the_task_token',
+            'workflowExecution': {'runId': 'the_run_id', 'workflowId': 'the_workflow_id'}}
 
+@pytest.fixture
+def worker(mocker):
+    mocked_functions = {'respond_activity_task_completed':Mock(),
+                        'respond_activity_task_failed':Mock()}
+    client_mock = type("ClientMock", (object,), mocked_functions)
+    mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=client_mock())
+    worker = floto.ActivityWorker()
+    worker.result = 'result'
+    worker.task_token = 'tt'
+    return worker
 
 class TestActivityWorker:
     def test_init(self):
@@ -65,7 +78,7 @@ class TestActivityWorkerAPICalls:
         sig = signature(floto.ACTIVITY_FUNCTIONS['my_activity_type:v2'])
         assert ('context' in sig.parameters)
 
-    def test_poll(self, mocker):
+    def test_poll(self, mocker, activity_task):
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=activity_task)
 
         worker = floto.ActivityWorker()
@@ -80,7 +93,7 @@ class TestActivityWorkerAPICalls:
         assert worker.task_token == 'the_task_token'
         assert worker.last_response['activityId'] == 'my_activity_id'
 
-    def test_run_with_response(self, mocker):
+    def test_run_with_response(self, mocker, activity_task):
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=activity_task)
         mocker.patch('floto.ActivityWorker.complete')
 
@@ -163,7 +176,19 @@ class TestActivityWorkerAPICalls:
         worker.terminate_worker()
         assert worker.get_terminate_activity_worker()
 
-    def test_run_start_stop_heartbeats_with_successful_activity(self, mocker):
+    def test_complete_result_string(self, mocker, worker):
+        worker.result = 'result'
+        worker.complete()
+        assertion = {'taskToken':worker.task_token, 'result':'result'}
+        worker.swf.client.respond_activity_task_completed.assert_called_once_with(**assertion)
+
+    def test_complete_result_object(self, mocker, worker):
+        worker.result = {'foo':'bar'}
+        worker.complete()
+        assertion = {'taskToken':worker.task_token, 'result':json.dumps({'foo':'bar'})}
+        worker.swf.client.respond_activity_task_completed.assert_called_once_with(**assertion)
+
+    def test_run_start_stop_heartbeats_with_successful_activity(self, mocker, activity_task):
         mocker.patch('floto.ActivityWorker.complete')
         mocker.patch('floto.ActivityWorker.start_heartbeat')
         mocker.patch('floto.ActivityWorker.stop_heartbeat')
@@ -204,3 +229,4 @@ class TestActivityWorkerAPICalls:
         worker.heartbeat_sender.send_heartbeats = Mock()
         worker.start_heartbeat()
         assert not worker.heartbeat_sender.send_heartbeats.called
+

@@ -35,15 +35,14 @@ def dt1():
 
 @pytest.fixture
 def builder(task_1, task_2, empty_history):
-    execution_graph = floto.decider.ExecutionGraph(activity_tasks=[task_1, task_2])
-    b = floto.decider.DecisionBuilder(execution_graph, 'floto_activities')
+    b = floto.decider.DecisionBuilder([task_1, task_2], 'floto_activities')
     b.history = empty_history
     return b
 
 class TestDecisionBuilder(object):
-    def test_init(self):
-        b = floto.decider.DecisionBuilder('execution_graph', 'atl')
-        assert b.execution_graph == 'execution_graph'
+    def test_init(self, task_1):
+        b = floto.decider.DecisionBuilder([task_1], 'atl')
+        assert b.execution_graph.tasks == [task_1]
         assert b.workflow_fail == False
         assert b.workflow_complete == False
         assert b.activity_task_list == 'atl'
@@ -300,8 +299,7 @@ class TestDecisionBuilder(object):
     def test_completed_have_depending_tasks_with_depending(self, mocker, builder, empty_history):
         a = floto.specs.ActivityTask(name='a', version='v', activity_id='a')
         b = floto.specs.ActivityTask(name='b', version='v', activity_id='b', requires=[a])
-        graph = floto.decider.ExecutionGraph(activity_tasks=[a,b])
-        d = floto.decider.DecisionBuilder(graph, 'atl')
+        d = floto.decider.DecisionBuilder([a,b], 'atl')
         d.history = empty_history
         mocker.patch('floto.History.get_id_task_event', return_value='a')
         assert d.completed_have_depending_tasks(completed_tasks=['a'])
@@ -309,8 +307,7 @@ class TestDecisionBuilder(object):
     def test_completed_have_depending_tasks_wo_depending(self, mocker, builder, empty_history):
         a = floto.specs.ActivityTask(name='a', version='v', activity_id='a')
         b = floto.specs.ActivityTask(name='b', version='v', activity_id='b', requires=[a])
-        graph = floto.decider.ExecutionGraph(activity_tasks=[a,b])
-        d = floto.decider.DecisionBuilder(graph, 'atl')
+        d = floto.decider.DecisionBuilder([a,b], 'atl')
         d.history = empty_history
         mocker.patch('floto.History.get_id_task_event', return_value='b')
         assert not d.completed_have_depending_tasks(completed_tasks=['b'])
@@ -363,8 +360,7 @@ class TestDecisionBuilder(object):
     def test_get_task_to_be_scheduled_single_id(self):
         t1 = floto.specs.ActivityTask(name='t1', version='v', activity_id='t1')
         t2 = floto.specs.ActivityTask(name='t2', version='v', activity_id='t2', requires=[t1])
-        graph = floto.decider.ExecutionGraph(activity_tasks=[t1, t2])
-        d = floto.decider.DecisionBuilder(graph, 'atl')
+        d = floto.decider.DecisionBuilder([t1,t2], 'atl')
         d.history = empty_history 
         d.history.is_task_completed = lambda x: {t1:True, t2:False}[x]
         tasks = d.get_tasks_to_be_scheduled_single_id('t1')
@@ -376,8 +372,7 @@ class TestDecisionBuilder(object):
         c = floto.specs.ActivityTask(name='c', version='v', activity_id='c', requires=[a,b])
         d = floto.specs.ActivityTask(name='d', version='v', activity_id='d', requires=[b])
 
-        graph = floto.decider.ExecutionGraph(activity_tasks=[a,b,c,d])
-        d = floto.decider.DecisionBuilder(graph, 'atl')
+        d = floto.decider.DecisionBuilder([a,b,c,d], 'atl')
         d.history = empty_history 
         d.history.is_task_completed = lambda x: {a:True, b:True, c:False, d:False}[x]
         assert d.get_tasks_to_be_scheduled_single_id('a') == [c]
@@ -433,12 +428,21 @@ class TestDecisionBuilder(object):
         assert d.task_list['name'] == 'tl'
         assert json.loads(d._get_attribute('input')) == {'foo':'bar'}
 
+    def test_all_workflow_tasks_finished_with_generator(self, builder, mocker):
+        mocker.patch('floto.decider.DecisionBuilder.completed_contain_generator', 
+                return_value=True)
+        assert not builder.all_workflow_tasks_finished(['t'])
+
     def test_all_workflow_tasks_finished_depending_tasks(self, builder, mocker):
+        mocker.patch('floto.decider.DecisionBuilder.completed_contain_generator', 
+                return_value=False)
         mocker.patch('floto.decider.DecisionBuilder.completed_have_depending_tasks', 
                 return_value=True)
         assert not builder.all_workflow_tasks_finished(['t'])
 
     def test_all_workflow_tasks_finished_open_tasks(self, builder, mocker):
+        mocker.patch('floto.decider.DecisionBuilder.completed_contain_generator', 
+                return_value=False)
         mocker.patch('floto.decider.DecisionBuilder.completed_have_depending_tasks', 
                 return_value=False)
         mocker.patch('floto.decider.DecisionBuilder.open_task_counts', 
@@ -446,6 +450,8 @@ class TestDecisionBuilder(object):
         assert not builder.all_workflow_tasks_finished(['t'])
 
     def test_all_workflow_tasks_finished_not_completed(self, builder, mocker):
+        mocker.patch('floto.decider.DecisionBuilder.completed_contain_generator', 
+                return_value=False)
         mocker.patch('floto.decider.DecisionBuilder.completed_have_depending_tasks', 
                 return_value=False)
         mocker.patch('floto.decider.DecisionBuilder.open_task_counts', 
@@ -455,6 +461,8 @@ class TestDecisionBuilder(object):
         assert not builder.all_workflow_tasks_finished(['t'])
 
     def test_all_workflow_tasks_finished(self, builder, mocker):
+        mocker.patch('floto.decider.DecisionBuilder.completed_contain_generator', 
+                return_value=False)
         mocker.patch('floto.decider.DecisionBuilder.completed_have_depending_tasks', 
                 return_value=False)
         mocker.patch('floto.decider.DecisionBuilder.open_task_counts', 
@@ -462,9 +470,8 @@ class TestDecisionBuilder(object):
         mocker.patch('floto.decider.DecisionBuilder.outgoing_vertices_completed',
                 return_value=True)
         assert builder.all_workflow_tasks_finished(['t'])
-
-
-
-
+        
+    def test_update_execution_graph(self):
+        pass
 
 

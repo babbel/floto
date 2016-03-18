@@ -50,9 +50,11 @@ class DecisionInput:
         dependencies = self._execution_graph.get_dependencies(task.id_)
         if dependencies:
             for d in dependencies:
-                result = self.history.get_result_completed_activity(d)
-                if result:
-                    input_[d.id_] = result
+                # TODO test
+                if not isinstance(d, floto.specs.Generator):
+                    result = self.history.get_result_completed_activity(d)
+                    if result:
+                        input_[d.id_] = result
         elif self.get_input_workflow():
             input_['workflow'] = self.get_input_workflow()
         if task.input:

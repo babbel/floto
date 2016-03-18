@@ -32,8 +32,7 @@ class Decider(Base):
         self.activity_task_list = self.decider_spec.activity_task_list or 'floto_activities'
 
         activity_tasks = self.decider_spec.activity_tasks
-        execution_graph = floto.decider.ExecutionGraph(activity_tasks)
-        self.decision_builder = floto.decider.DecisionBuilder(execution_graph,
+        self.decision_builder = floto.decider.DecisionBuilder(activity_tasks,
                                                               self.activity_task_list)
 
     def get_decisions(self):

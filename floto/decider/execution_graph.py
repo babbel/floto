@@ -127,3 +127,40 @@ class ExecutionGraph:
     def _get_column_of_graph_matrix(self, task_id):
         idx = self.id_to_idx[task_id]
         return [row[idx] for row in self.graph]
+
+    # TODO test
+    def update(self, generator_task, new_tasks):
+        generator_depending_tasks = self.get_depending_tasks(generator_task.id_)
+        for d in generator_depending_tasks:
+            dependencies = self._remove_dependency(d.requires, generator_task)
+            dependencies.extend(new_tasks)
+            d.requires = dependencies
+
+        for t in new_tasks:
+            if t.requires:
+                t.requires.extend(generator_task)
+            else:
+                t.requires = [generator_task]
+
+        untouched_ids = set(self.ids) - set([t.id_ for t in generator_depending_tasks])
+        untouched_tasks = [self.tasks_by_id[id_] for id_ in untouched_ids]
+
+        tasks = []
+        tasks.extend(untouched_tasks)
+        tasks.extend(generator_depending_tasks)
+        tasks.extend(new_tasks)
+        self.tasks = tasks
+
+        self._reset()
+
+    def _remove_dependency(self, dependencies, task_to_remove):
+        return [t for t in dependencies if t.id_ != task_to_remove.id_]
+
+    def _reset(self):
+        self._id_to_idx = None
+        self._idx_to_id = None
+        self._ids = None
+        self._tasks_by_id = None
+        self.graph_matrix = None
+
+

@@ -118,10 +118,8 @@ class ActivityWorker:
 
     def complete(self):
         args = {'taskToken': self.task_token}
-        if self.result and isinstance(self.result, str):
-            args['result'] = self.result
-        if self.result and isinstance(self.result, dict):
-            args['result'] = json.dumps(self.result)
+        if self.result:
+            args['result'] = floto.specs.JSONEncoder.dump_object(self.result)
         self.swf.client.respond_activity_task_completed(**args)
 
     def start_heartbeat(self):
