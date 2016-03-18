@@ -1,13 +1,22 @@
 import pytest
 import floto.decider
-from floto.specs import ActivityTask, Timer
+from floto.specs import ActivityTask, Timer, Generator
+
+@pytest.fixture
+def task_1():
+    return ActivityTask(activity_id='t1:1', name='t1', version='1')
+
+@pytest.fixture
+def task_2():
+    return ActivityTask(activity_id='t2:1', name='t2', version='1')
+
+@pytest.fixture
+def graph(task_1, task_2):
+    return floto.decider.ExecutionGraph(activity_tasks=[task_1, task_2])
 
 class TestExecutionGraph():
-    def test_size_matrix_graph_from_task_spec(self):
-        tasks = [ActivityTask(activity_id='t1:1', name='t1', version='1'),
-                 ActivityTask(activity_id='t2:1', name='t2', version='1')]
-        g = floto.decider.ExecutionGraph(activity_tasks=tasks)
-        matrix = g.graph_from_task_specs()
+    def test_size_matrix_graph_from_task_spec(self, graph):
+        matrix = graph.graph_from_task_specs()
         assert len(matrix) == 2
         assert len(matrix[0]) == 2
         assert matrix[0][0] == 0
@@ -107,5 +116,29 @@ class TestExecutionGraph():
         outgoing = g.outgoing_vertices()
         assert len(outgoing) == 2
         assert set([e.id_ for e in outgoing]) == set(['t3:1', 't4:1'])
+
+    def test_update(self):
+        t1 = ActivityTask(activity_id='t1:1', name='t1', version='1')
+        g = Generator(activity_id='g:1', name='g', version='1', requires=[t1])
+        t3 = ActivityTask(activity_id='t3:1', name='t3', version='1', requires=[g])
+
+        t4 = ActivityTask(activity_id='t4:1', name='t4', version='1')
+        t5 = ActivityTask(activity_id='t5:1', name='t5', version='1')
+
+        graph = floto.decider.ExecutionGraph(activity_tasks=[t1,g,t3])
+        graph.update(g, [t4, t5])
+        print([t.id_ for t in graph.tasks])
+        print([t.id_ for t in graph.tasks_by_id['t4:1'].requires])
+        # TODO assumption
+
+
+    def test_remove_dependency(self, graph, task_1, task_2):
+        assert graph._remove_dependency([task_1, task_2], task_2) == [task_1]
+
+    def test_reset(self, graph):
+        graph.graph
+        assert graph.graph_matrix
+        graph._reset()
+        assert not graph.graph_matrix
 
 

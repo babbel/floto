@@ -35,14 +35,26 @@ class Decider(Base):
         self.activity_task_list = self.decider_spec.activity_task_list or 'floto_activities'
 
         self.decision_builder = None
-
         if self.decider_spec.activity_tasks:
-            self._init_decision_builder(self.decider_spec.activity_tasks)
+            activity_tasks = self.decider_spec.activity_tasks
+            self.decision_builder = floto.decider.DecisionBuilder(activity_tasks,
+                    self.activity_task_list)
 
-    def _init_decision_builder(self, activity_tasks):
-        execution_graph = floto.decider.ExecutionGraph(activity_tasks)
-        self.decision_builder = floto.decider.DecisionBuilder(execution_graph,
-                                                              self.activity_task_list)
+#TOOD cleanup -> Check if dynamic decider is working
+#<<<<<<< HEAD
+        #self.decision_builder = None
+
+        #if self.decider_spec.activity_tasks:
+            #self._init_decision_builder(self.decider_spec.activity_tasks)
+
+    #def _init_decision_builder(self, activity_tasks):
+        #execution_graph = floto.decider.ExecutionGraph(activity_tasks)
+        #self.decision_builder = floto.decider.DecisionBuilder(execution_graph,
+#=======
+        #activity_tasks = self.decider_spec.activity_tasks
+        #self.decision_builder = floto.decider.DecisionBuilder(activity_tasks,
+#>>>>>>> generator
+                                                              #self.activity_task_list)
 
     def get_decisions(self):
         """Heart of the decider logics. Called by floto.decider.Base in each 

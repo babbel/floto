@@ -74,6 +74,19 @@ class TestJSONEncoder(object):
         assert isinstance(cw, floto.specs.ChildWorkflow)
         assert cw.id_ == 'wid'
 
+    def test_generator_dumps(self):
+        g = floto.specs.Generator(activity_id='generator_id')
+        j = json.dumps(g, cls=floto.specs.JSONEncoder)
+        json_spec = json.loads(j)
+        assert json_spec['type'] == 'floto.specs.Generator'
+        assert json_spec['id_'] == 'generator_id'
+
+    def test_generator_loads(self):
+        j = {'type':'floto.specs.Generator', 'id_':'generator_id'}
+        g = json.loads(json.dumps(j), object_hook=floto.specs.JSONEncoder.object_hook) 
+        assert isinstance(g, floto.specs.Generator)
+        assert g.id_ == 'generator_id'
+
     def test_workflow_spec(self):
         tasks = [floto.specs.ActivityTask(name='n')]
         spec = floto.specs.DeciderSpec(activity_tasks=tasks)

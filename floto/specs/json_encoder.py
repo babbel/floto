@@ -14,7 +14,8 @@ class JSONEncoder(json.JSONEncoder):
                             floto.specs.DeciderSpec,
                             floto.specs.retry_strategy.Strategy,
                             floto.specs.Timer,
-                            floto.specs.ChildWorkflow)):
+                            floto.specs.ChildWorkflow,
+                            floto.specs.Generator)):
             return self.default_from_namespace(obj)
 
         if isinstance(obj, (dt.datetime,

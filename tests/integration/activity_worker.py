@@ -79,6 +79,21 @@ def activity_5():
     print('activity_5 finished' + 20 * '.')
     return {'status':'finished'}
 
+@floto.generator(name='generator1', version='v1')
+def generator1():
+    rs = floto.specs.retry_strategy.InstantRetry(retries=2)
+    task_1 = floto.specs.ActivityTask(name='activity4', version='v2', retry_strategy=rs, 
+            input={'file':'a.in'})
+    task_2 = floto.specs.ActivityTask(name='activity4', version='v2', retry_strategy=rs,
+            input={'file':'b.in'})
+    return [task_1, task_2]
+
+@floto.activity(name='activity6', version='v1')
+def activity_6(context):
+    processed_files = [v['activity_task']['file'] for k,v in context.items() if 'activity4' in k]
+    return processed_files
+
+
 
 class ActivityWorkerProcess(object):
     def __init__(self, domain, task_list):

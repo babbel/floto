@@ -56,7 +56,6 @@ class Base:
     def poll_for_decision(self):
         """Polls for decision tasks. If a new decision task has been scheduled, the response, 
         history and task token are stored in the corresponding instance variables."""
-        # TODO: Catch error if service is not available
         self.last_response = self.swf.poll_for_decision_task_page(domain=self.domain,
                                                                   task_list=self.task_list)
         if 'taskToken' in self.last_response:

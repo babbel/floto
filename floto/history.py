@@ -277,7 +277,8 @@ class History:
 
         if c:
             attributes = self.get_event_attributes(c[0])
-            if attributes['result']:
+            # TODO test
+            if 'result' in attributes:
                 return floto.specs.JSONEncoder.load_string(attributes['result'])
             else:
                 return None

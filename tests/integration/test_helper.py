@@ -24,7 +24,11 @@ def get_result(domain, run_id, workflow_id):
     response['previousStartedEventId'] = 1
     history = floto.History('floto_test', 'no_task_list', response)
     wf_completed = history.get_events_by_type('WorkflowExecutionCompleted')[0]
-    result = json.loads(history.get_event_attributes(wf_completed)['result'])
+    attributes = history.get_event_attributes(wf_completed)
+    if 'result' in attributes:
+        result = json.loads(attributes['result'])
+    else:
+        result = None
     return result
 
 

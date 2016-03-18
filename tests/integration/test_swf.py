@@ -228,13 +228,28 @@ def run_16():
     Failing Task in ChildWorkflow
 
     """
+    # TODO assert specific results, print workflow result
     result = test_16()
-    result = get_activity_result(result, 'test_child_workflow', 'v2')
+    result_child_workflow = get_activity_result(result, 'test_child_workflow', 'v2')
+    print(result_child_workflow)
     print('Result: ' + json.dumps(result) + '\n')
     assert result
 
+@docprint
+def run_17():
+    """Test 17
+    Activity generates tasks.
+    """
+    result = test_17()
+    result_activity_6 = get_activity_result(result, 'activity6', 'v1')
+    assert result_activity_6 == ['a.in', 'b.in']
+    print('Result: ' + json.dumps(result) + '\n')
+
+
+
 tests = [run_01, run_02, run_03, run_04, run_05, run_06, run_07, run_08, run_09, run_10, run_11,
-         run_12, run_13, run_14, run_15, run_16]
+         run_12, run_13, run_14, run_15, run_16, run_17]
+
 
 try:
     [t() for t in tests]
