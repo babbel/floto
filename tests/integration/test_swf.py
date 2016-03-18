@@ -242,14 +242,14 @@ def run_17():
     """
     result = test_17()
     result_activity_6 = get_activity_result(result, 'activity6', 'v1')
-    assert result_activity_6 == ['a.in', 'b.in']
+    print(result_activity_6)
+    assert set(result_activity_6) == set(['a.in', 'b.in'])
     print('Result: ' + json.dumps(result) + '\n')
 
 
 
 tests = [run_01, run_02, run_03, run_04, run_05, run_06, run_07, run_08, run_09, run_10, run_11,
          run_12, run_13, run_14, run_15, run_16, run_17]
-
 
 try:
     [t() for t in tests]
@@ -259,7 +259,6 @@ except (KeyboardInterrupt, SystemExit):
 
 print()
 print('All workflows finished successfully.')
-print('Waiting for workers to finish last poll and terminate.')
 
 worker1.terminate()
 worker2.terminate()

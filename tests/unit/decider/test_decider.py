@@ -75,11 +75,9 @@ class TestDecider():
     def test_get_decisions(self, decider, mocker):
         mocker.patch('floto.decider.DecisionBuilder.get_decisions', return_value=['d'])
         mocker.patch('floto.decider.DecisionBuilder.is_terminate_workflow', return_value=True)
-        mocker.patch('floto.decider.Base.get_workflow_execution_description', return_value='desc')
         decider.get_decisions()
         assert decider.decisions == ['d']
         assert decider.terminate_workflow == True
-        assert decider.decision_builder.current_workflow_execution_description == 'desc'
 
     def test_tear_down_do_not_repeat(self, decider):
         decider.swf.start_workflow_execution = Mock()

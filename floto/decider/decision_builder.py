@@ -14,7 +14,6 @@ class DecisionBuilder:
         self.execution_graph = floto.decider.ExecutionGraph(activity_tasks) 
         self.history = None
         self.activity_task_list = activity_task_list
-        self.current_workflow_execution_description = None
         self.decision_input = floto.decider.DecisionInput(execution_graph=self.execution_graph)
 
     def get_decisions(self, history):
@@ -112,7 +111,7 @@ class DecisionBuilder:
         """
         logger.debug('DecisionBuilder.get_decisions_after_activity_completion...')
 
-        self._update_execution_graph(events)
+        self._update_execution_graph(self._get_generators(events))
         task_ids = [self.history.get_id_task_event(e) for e in events]
         tasks = self.get_tasks_to_be_scheduled(task_ids)
 
@@ -185,8 +184,6 @@ class DecisionBuilder:
             return False
         if self.completed_have_depending_tasks(completed_tasks):
             return False
-        if self.open_task_counts():
-            return False
         if not self.outgoing_vertices_completed():
             return False
         return True
@@ -206,22 +203,6 @@ class DecisionBuilder:
             depending_tasks = self.execution_graph.get_depending_tasks(id_)
             if depending_tasks:
                 return True
-        return False
-
-    def open_task_counts(self):
-        """Return True if there are "openActivityTasks" or "openTimers" in the "workflow execution
-        description. False otherwise."""
-        if not self.current_workflow_execution_description:
-            return False
-
-        description = self.current_workflow_execution_description
-        open_activity_tasks = description['openCounts']['openActivityTasks']
-        open_timers = description['openCounts']['openTimers']
-        open_child_workflows = description['openCounts']['openChildWorkflowExecutions']
-        open_lambda_functions = description['openCounts']['openLambdaFunctions']
-
-        if open_activity_tasks or open_timers or open_child_workflows or open_lambda_functions:
-            return True
         return False
 
     def outgoing_vertices_completed(self):
@@ -263,17 +244,24 @@ class DecisionBuilder:
     def uniqify_activity_tasks(self, activity_tasks):
         return list({t.id_: t for t in activity_tasks}.values())
 
-    # TODO test
-    def _update_execution_graph(self, completed_events):
-        activity_ids = [self.history.get_id_task_event(e) for e in completed_events 
-                if e['eventType'] == 'ActivityTaskCompleted']
-        activities = [self.execution_graph.tasks_by_id[id_] for id_ in activity_ids]
-        generators = [g for g in activities if isinstance(g, floto.specs.Generator)]
-        print('marker')
-        print(activity_ids)
-        for g in generators:
+    def _update_execution_graph(self, generators):
+        """Updates the execution graph if the completed activities contain generators."""
+        for g in generators: 
             new_tasks_json = json.dumps(self.history.get_result_completed_activity(g))
             new_tasks = json.loads(new_tasks_json, object_hook=floto.specs.JSONEncoder.object_hook)
             self.execution_graph.update(g, new_tasks)
             self.decision_input.execution_graph = self.execution_graph
+            
+    def _get_generators(self, completed_events):
+        """Take ActivityTaskCompleted events and check if activity_id correponds to a generator
+        activity.
+        Returns
+        -------
+        list: <floto.specs.Generator>
+        """
+        activity_ids = [self.history.get_id_task_event(e) for e in completed_events 
+                if e['eventType'] == 'ActivityTaskCompleted']
+        activities = [self.execution_graph.tasks_by_id[id_] for id_ in activity_ids]
+        generators = [g for g in activities if isinstance(g, floto.specs.Generator)]
+        return generators
 

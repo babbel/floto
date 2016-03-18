@@ -40,30 +40,11 @@ class Decider(Base):
             self.decision_builder = floto.decider.DecisionBuilder(activity_tasks,
                     self.activity_task_list)
 
-#TOOD cleanup -> Check if dynamic decider is working
-#<<<<<<< HEAD
-        #self.decision_builder = None
-
-        #if self.decider_spec.activity_tasks:
-            #self._init_decision_builder(self.decider_spec.activity_tasks)
-
-    #def _init_decision_builder(self, activity_tasks):
-        #execution_graph = floto.decider.ExecutionGraph(activity_tasks)
-        #self.decision_builder = floto.decider.DecisionBuilder(execution_graph,
-#=======
-        #activity_tasks = self.decider_spec.activity_tasks
-        #self.decision_builder = floto.decider.DecisionBuilder(activity_tasks,
-#>>>>>>> generator
-                                                              #self.activity_task_list)
-
     def get_decisions(self):
         """Heart of the decider logics. Called by floto.decider.Base in each 
         'poll_for_decision_taks loop'. Fills self.decisions, which are returned to SWF.
         """
         logger.debug('Decider.get_decisions...')
-        # TODO: redesign desc
-        desc = self.get_workflow_execution_description()
-        self.decision_builder.current_workflow_execution_description = desc
         self.decisions = self.decision_builder.get_decisions(self.history)
         self.terminate_workflow = self.decision_builder.is_terminate_workflow()
 
