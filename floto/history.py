@@ -1,4 +1,8 @@
+import logging
+
 import floto.api
+
+logger = logging.getLogger(__name__)
 
 class History:
     """History provides information based on the events recorded by SWF during the workflow
@@ -375,6 +379,7 @@ class History:
             self._fill_events_by_activity_id(events)
 
     def _collect_new_events_for_fill_by_activity_id(self, event_type, max_event_id):
+        logger.debug('History._collect_new_events_for_fill_by_activity_id...{}, max {}'.format(event_type,max_event_id))
         events = []
         if 'none' in self.events_by_activity_id:
             if event_type in self.events_by_activity_id['none']:
@@ -403,6 +408,7 @@ class History:
                 self.events_by_activity_id[activity_id][event['eventType']].append(event)
 
     def _read_next_event_page(self):
+        logger.debug('History._read_next_event_page...')
         if not self.next_page_token:
             raise ValueError('floto.History._read_next_event_page(): No page token!')
 
@@ -417,6 +423,7 @@ class History:
         self.lowest_event_id = next['events'][-1]['eventId']
 
     def _has_next_event_page(self):
+        logger.debug('History._has_next_event_page...')
         next_page = True
         if not self.next_page_token:
             next_page = False

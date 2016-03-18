@@ -1,9 +1,12 @@
+import logging
+
 import floto
 import floto.api
 import floto.decisions
 import floto.specs
 from floto.decider import Base
 
+logger = logging.getLogger(__name__)
 
 class Decider(Base):
     """Decider which is defined by a DeciderSpec object 
@@ -14,7 +17,7 @@ class Decider(Base):
        For definition of decider spec see floto.specs.DeciderSpec
     """
 
-    def __init__(self, decider_spec=None):
+    def __init__(self, decider_spec=None, identity=None):
         super().__init__()
 
         if isinstance(decider_spec, str):
@@ -31,7 +34,12 @@ class Decider(Base):
         self.repeat_workflow = self.decider_spec.repeat_workflow
         self.activity_task_list = self.decider_spec.activity_task_list or 'floto_activities'
 
-        activity_tasks = self.decider_spec.activity_tasks
+        self.decision_builder = None
+
+        if self.decider_spec.activity_tasks:
+            self._init_decision_builder(self.decider_spec.activity_tasks)
+
+    def _init_decision_builder(self, activity_tasks):
         execution_graph = floto.decider.ExecutionGraph(activity_tasks)
         self.decision_builder = floto.decider.DecisionBuilder(execution_graph,
                                                               self.activity_task_list)
@@ -40,6 +48,7 @@ class Decider(Base):
         """Heart of the decider logics. Called by floto.decider.Base in each 
         'poll_for_decision_taks loop'. Fills self.decisions, which are returned to SWF.
         """
+        logger.debug('Decider.get_decisions...')
         # TODO: redesign desc
         desc = self.get_workflow_execution_description()
         self.decision_builder.current_workflow_execution_description = desc
@@ -49,7 +58,9 @@ class Decider(Base):
     def tear_down(self):
         """If self.reapeat_workflow is True, the workflow is restarted after successful
         completion."""
+        logger.debug('Decider.tear_down...')
         if self.repeat_workflow:
+            logger.debug('Decider.tear_down: repeat...')
             execution_info = self.get_workflow_execution_description()['executionInfo']
             args = {'domain': self.domain,
                     'workflow_type_name': execution_info['workflowType']['name'],
@@ -60,5 +71,6 @@ class Decider(Base):
             self.terminate_workflow = False
             self.terminate_decider = False
         else:
+            logger.debug('Decider.tear_down: terminate')
             self.terminate_decider = self.decider_spec.terminate_decider_after_completion
 

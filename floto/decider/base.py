@@ -36,6 +36,7 @@ class Base:
         self._separate_process = None
 
     def complete(self):
+        logger.debug('Base.complete...')
         decisions = [d.get_decision() for d in self.decisions]
         try:
             self.swf.client.respond_decision_task_completed(taskToken=self.task_token,
@@ -64,6 +65,7 @@ class Base:
                                          response=self.last_response)
             self.run_id = self.last_response['workflowExecution']['runId']
             self.workflow_id = self.last_response['workflowExecution']['workflowId']
+            logger.debug('Found task token')
         else:
             self.history = None
             self.task_token = None
@@ -80,6 +82,7 @@ class Base:
             self._run()
 
     def _run(self):
+        # TODO remove poll counting before use in prodcuction
         number_polls = 0
         while (not self.terminate_decider) and (number_polls < self.max_polls):
             self.poll_for_decision()
@@ -88,6 +91,7 @@ class Base:
             if self.task_token:
                 self.get_decisions()
                 self.complete()
+        logger.debug('Base._run ended. Polls: {}'.format(number_polls))
 
     def get_workflow_execution_description(self):
         return self.swf.describe_workflow_execution(self.domain, self.workflow_id, self.run_id)

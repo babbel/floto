@@ -1,6 +1,9 @@
-from floto.decisions import Decision
 import json
+import logging
 
+from floto.decisions import Decision
+
+logger = logging.getLogger(__name__)
 
 class StartChildWorkflowExecution(Decision):
     def __init__(self, **args):
@@ -39,6 +42,7 @@ class StartChildWorkflowExecution(Decision):
         return d
 
     def get_attributes(self):
+        logger.debug('StartChildWorkflowExecution.get_attributes...')
         return self.startChildWorkflowExecutionDecisionAttributes
 
     @property

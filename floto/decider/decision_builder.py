@@ -2,6 +2,10 @@ import floto
 import floto.decisions
 import floto.specs
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class DecisionBuilder:
     def __init__(self, execution_graph, activity_task_list):
@@ -32,6 +36,7 @@ class DecisionBuilder:
         return self.workflow_fail or self.workflow_complete
 
     def _collect_decisions(self, first_event_id, last_event_id):
+        logger.debug('DecisionBuilder._collect_decisions({},{})'.format(first_event_id, last_event_id))
         if first_event_id == 0:
             return self.get_decisions_after_workflow_start()
 
@@ -53,6 +58,7 @@ class DecisionBuilder:
         return decisions
 
     def get_decisions_after_workflow_start(self):
+        logger.debug('DecisionBuilder.get_decisions_after_workflow_start()')
         decisions = []
         tasks = self.execution_graph.get_first_tasks()
         for t in tasks:
@@ -104,6 +110,7 @@ class DecisionBuilder:
         events: list
             List of ActivityTaskCompleted or TimerFired events
         """
+        logger.debug('DecisionBuilder.get_decisions_after_activity_completion...')
         task_ids = [self.history.get_id_task_event(e) for e in events]
         tasks = self.get_tasks_to_be_scheduled(task_ids)
 
@@ -157,6 +164,7 @@ class DecisionBuilder:
                                           start_to_fire_timeout=timer_task.delay_in_seconds)
 
     def get_decision_start_child_workflow_execution(self, child_workflow_task=None, input_=None):
+        logger.debug('DecisionBuilder.get_decision_start_child_workflow_execution...')
         workflow_type = floto.api.WorkflowType(name=child_workflow_task.workflow_type_name,
                 version=child_workflow_task.workflow_type_version)
         args = {'workflow_id':child_workflow_task.id_,
@@ -169,6 +177,7 @@ class DecisionBuilder:
 
     def all_workflow_tasks_finished(self, completed_tasks):
         """Return True if all tasks of this workflow have finished, False otherwise."""
+        logger.debug('DecisionBuilder.all_workflow_tasks_finished({})'.format((completed_tasks)))
         if self.completed_have_depending_tasks(completed_tasks):
             return False
         if self.open_task_counts():
@@ -180,6 +189,7 @@ class DecisionBuilder:
     def completed_have_depending_tasks(self, completed_tasks):
         """Return True if any of the tasks in "completed_tasks" has a task which depends on it.
         False otherwise."""
+        logger.debug('DecisionBuilder.completed_have_depending_tasks({})'.format((completed_tasks)))
         for t in completed_tasks:
             id_ = self.history.get_id_task_event(t)
             depending_tasks = self.execution_graph.get_depending_tasks(id_)
@@ -223,6 +233,7 @@ class DecisionBuilder:
         list: floto.specs.Task
             The tasks to be scheduled in the next decision
         """
+        logger.debug('DecisionBuilder.get_tasks_to_be_scheduled({})'.format(completed_tasks))
         tasks = []
         for completed_task in completed_tasks:
             tasks += self.get_tasks_to_be_scheduled_single_id(completed_task)

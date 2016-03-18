@@ -61,6 +61,7 @@ class ActivityWorker:
         self.heartbeat_sender = floto.HeartbeatSender()
 
     def poll(self):
+        logger.debug('ActivityWorker.poll...')
         self.last_response = self.swf.poll_for_activity_task(domain=self.domain,
                                                              task_list=self.task_list,
                                                              identity=self.identity)
@@ -70,6 +71,7 @@ class ActivityWorker:
             self.task_token = None
 
     def run(self):
+        logger.debug('ACTIVITY_FUNCS: {}'.format(floto.ACTIVITY_FUNCTIONS))
         number_polls = 0
         while (not self.get_terminate_activity_worker()) and (number_polls < self.max_polls):
             self.poll()
@@ -111,12 +113,14 @@ class ActivityWorker:
         return self._terminate_activity_worker
 
     def task_failed(self, error):
+        logger.debug('ActivityWorker.task_failed...')
         self.swf.client.respond_activity_task_failed(taskToken=self.task_token, details=str(error))
 
     def terminate_worker(self):
         self._terminate_activity_worker = True
 
     def complete(self):
+        logger.debug('ActivityWorker.complete...')
         args = {'taskToken': self.task_token}
         if self.result and isinstance(self.result, str):
             args['result'] = self.result
@@ -125,10 +129,12 @@ class ActivityWorker:
         self.swf.client.respond_activity_task_completed(**args)
 
     def start_heartbeat(self):
+        logger.debug('ActivityWorker.start_heartbeat...')
         args = {'timeout': self.task_heartbeat_in_seconds,
                 'task_token': self.task_token}
         if self.task_heartbeat_in_seconds:
             self.heartbeat_sender.send_heartbeats(**args)
 
     def stop_heartbeat(self):
+        logger.debug('ActivityWorker.start_heartbeat...')
         self.heartbeat_sender.stop_heartbeats()
