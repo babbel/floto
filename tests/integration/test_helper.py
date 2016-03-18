@@ -1,4 +1,5 @@
 import json
+import pprint
 import time
 from functools import wraps
 
@@ -59,6 +60,19 @@ def get_activity_result(result, name, version):
     return [v for (k, v) in result.items() if name + ':' + version in k][0]
 
 
+def print_result(result):
+    pp = pprint.PrettyPrinter()
+    print('\n' + 'Result:')
+    pp.pprint(result)
+    print('='*77 + '\n')
+
+def print_details(details):
+    pp = pprint.PrettyPrinter()
+    print('\n' + 'Details of failed workflow:')
+    pp.pprint(details)
+    print('='*77 + '\n')
+
+
 class DeciderEarlyExit(Decider):
     def __init__(self, repetitions, **args):
         super().__init__(**args)
@@ -77,13 +91,15 @@ class DeciderEarlyExit(Decider):
 
 
 class SlowDecider(Decider):
-    def __init__(self, decider_spec):
+    def __init__(self, decider_spec, timeout=20, num_timeouts=3):
         super().__init__(decider_spec=decider_spec)
         self.timed_out = 0
-        self.max_timed_out = 1
+        self.max_timed_out = num_timeouts
+        self.timeout = timeout
 
     def get_decisions(self):
         if self.timed_out < self.max_timed_out:
-            time.sleep(5)
+            time.sleep(self.timeout)
             self.timed_out += 1
         super().get_decisions()
+

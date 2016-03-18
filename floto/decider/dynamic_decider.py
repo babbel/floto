@@ -9,10 +9,8 @@ class DynamicDecider(Decider):
     def get_decisions(self):
         if not self.decision_builder:
             spec = self.get_decider_spec_from_input()
-            self._init_decision_builder(spec.activity_tasks)
-
-        desc = self.get_workflow_execution_description()
-        self.decision_builder.current_workflow_execution_description = desc
+            self.decision_builder = floto.decider.DecisionBuilder(spec.activity_tasks,
+                    self.activity_task_list)
 
         self.decisions = self.decision_builder.get_decisions(self.history)
         self.terminate_workflow = self.decision_builder.is_terminate_workflow()

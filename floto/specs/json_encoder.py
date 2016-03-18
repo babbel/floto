@@ -68,9 +68,8 @@ class JSONEncoder(json.JSONEncoder):
     @staticmethod
     def load_string(json_string):
         """Deserialize `json_string` to Python Object. If `json_string` is not a valid json
-        document, just return `json_string`.
-
-        .. warning:: This is extremely forgiving. TODO: rethink.
+        document, just return `json_string`. It is used in the context of activity results: floto
+        handles str and JSON serialized results.
 
         Parameters
         ----------

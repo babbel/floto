@@ -46,11 +46,15 @@ class DecisionInput:
         return result if result else None
 
     def _get_input(self, task, input_field_name):
+        """Gets the input for <task>. If task has dependencies the result of the dependencies are
+        added to the input. If task does not have dependencies, the workflow input is added. If the
+        task itself was provided with input at the task definition the task input is added with the
+        key <input_field_name>.
+        """
         input_ = {}
         dependencies = self._execution_graph.get_dependencies(task.id_)
         if dependencies:
             for d in dependencies:
-                # TODO test
                 if not isinstance(d, floto.specs.Generator):
                     result = self.history.get_result_completed_activity(d)
                     if result:

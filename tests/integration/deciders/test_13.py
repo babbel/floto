@@ -33,11 +33,11 @@ def test_13():
                                terminate_decider_after_completion=True)
 
     decider_1 = floto.decider.Decider(decider_spec=decider_spec)
-    decider_2 = SlowDecider(decider_spec=decider_spec)
+    decider_2 = SlowDecider(decider_spec=decider_spec, timeout=20, num_timeouts=3)
 
     workflow_args = {'domain': decider_spec.domain,
                      'workflow_type_name': 'decider_timeout_workflow',
-                     'workflow_type_version': 'v1',
+                     'workflow_type_version': 'v2',
                      'task_list': decider_spec.task_list,
                      'input': {'foo': 'bar'}}
 
@@ -51,7 +51,7 @@ def test_13():
     while True:
         time.sleep(5)
         result = is_workflow_completed(decider_1.domain, response['runId'],
-                                       'decider_timeout_workflow_v1')
+                                       'decider_timeout_workflow_v2')
         if result:
             decider_1._separate_process.terminate()
             decider_2._separate_process.terminate()

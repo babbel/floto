@@ -89,6 +89,13 @@ class TestDecisionInput:
         assert i['activity_task'] == {'task_1':'val'}
         assert i['workflow'] == {'wf':'input'}
 
+    def test_get_input_wo_generator_result(self, di, mocker, task_1):
+        mocker.patch('floto.History.get_result_completed_activity')
+        g = floto.specs.Generator()
+        mocker.patch('floto.decider.ExecutionGraph.get_dependencies', return_value=[g])
+        di._get_input(task_1, '')
+        di.history.get_result_completed_activity.assert_not_called()
+
     def test_get_input_scheduled_task(self, di, mocker):
         scheduled_event = {'eventId':2, 
                    'eventType':'ActivityTaskScheduled', 

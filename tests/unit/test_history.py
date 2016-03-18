@@ -820,6 +820,21 @@ class TestHistory():
         task = floto.specs.ActivityTask(activity_id='a_id')
         assert h.get_result_completed_activity(task) == {'foo':'bar'}
 
+    def test_get_result_completed_activity_wo_result(self, dt1, dt2, empty_response):
+        activity_task_completed_event = {'eventId':2,
+                'eventType':'ActivityTaskCompleted',
+                'eventTimestamp':dt2,
+                'activityTaskCompletedEventAttributes':{'scheduledEventId':1}}
+
+        activity_task_scheduled_event = {'eventId':1,
+                   'eventType':'ActivityTaskScheduled',
+                   'eventTimestamp':dt1,
+                   'activityTaskScheduledEventAttributes':{'activityId':'a_id'}}
+        empty_response['events'] = [activity_task_completed_event, activity_task_scheduled_event]
+        h = floto.History(domain='d', task_list='tl', response=empty_response)
+        task = floto.specs.ActivityTask(activity_id='a_id')
+        assert not h.get_result_completed_activity(task)
+
     def test_get_result_completed_activity_rescheduled(self, dt1, dt2, dt3, page1_response, 
             page2_response, mocker):
 

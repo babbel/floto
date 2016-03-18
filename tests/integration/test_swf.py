@@ -17,7 +17,7 @@ from deciders.test_14 import test_14
 from deciders.test_15 import test_15
 from deciders.test_16 import test_16
 from deciders.test_17 import test_17
-from test_helper import get_activity_result, docprint
+from test_helper import get_activity_result, docprint, print_result, print_details
 
 from activity_worker import ActivityWorkerProcess
 
@@ -25,7 +25,6 @@ worker1 = ActivityWorkerProcess(domain='floto_test', task_list='floto_activities
 worker2 = ActivityWorkerProcess(domain='floto_test', task_list='floto_activities')
 worker1.start()
 worker2.start()
-
 
 @docprint
 def run_01():
@@ -35,22 +34,22 @@ def run_01():
 
     """
     result = test_01()
-    result = get_activity_result(result, 'activity1', 'v5')
-    print('Result: ' + json.dumps(result) + '\n')
-    assert result['workflow'] == {'foo': 'bar'}
-    assert result['status'] == 'finished'
+    result_activity_1 = get_activity_result(result, 'activity1', 'v5')
+    print_result(result)
+    assert result_activity_1['workflow'] == {'foo': 'bar'}
+    assert result_activity_1['status'] == 'finished'
 
 
 @docprint
 def run_02():
-    """Test 01
+    """Test 02
     Single task without context
 
     """
     result = test_02()
-    result = get_activity_result(result, 'activity2', 'v4')
-    print('Result: ' + json.dumps(result) + '\n')
-    assert result['status'] == 'finished'
+    result_activity_2 = get_activity_result(result, 'activity2', 'v4')
+    print_result(result)
+    assert result_activity_2['status'] == 'finished'
 
 
 @docprint
@@ -62,8 +61,7 @@ def run_03():
     result = test_03()
     result1 = get_activity_result(result, 'activity1', 'v5')
     result2 = get_activity_result(result, 'activity2', 'v4')
-    print('Result 1: ' + json.dumps(result1) + '\n')
-    print('Result 2: ' + json.dumps(result2) + '\n')
+    print_result(result)
 
     assert result1['workflow'] == {'foo': 'bar'}
     assert result1['status'] == 'finished'
@@ -78,7 +76,7 @@ def run_04():
     """
     result = test_04()
     result3 = get_activity_result(result, 'activity3', 'v2')
-    print('Result: ' + json.dumps(result) + '\n')
+    print_result(result)
 
     assert result3['activity1']['status'] == 'finished'
     assert result3['activity1']['workflow'] == {'foo': 'bar'}
@@ -92,10 +90,10 @@ def run_05():
 
     """
     result = test_05()
-    result = get_activity_result(result, 'activity_fails_3', 'v2')
-    print('Result: ' + json.dumps(result) + '\n')
-    assert result['workflow_input'] == {'foo': 'bar'}
-    assert result['status'] == 'finished'
+    result3 = get_activity_result(result, 'activity_fails_3', 'v2')
+    print_result(result)
+    assert result3['workflow_input'] == {'foo': 'bar'}
+    assert result3['status'] == 'finished'
 
 
 @docprint
@@ -105,9 +103,9 @@ def run_06():
 
     """
     details = test_06()
-    details = get_activity_result(details, 'activity_fails_2', 'v2')
-    print('Result: ' + json.dumps(details) + '\n')
-    assert details == 'Something went wrong'
+    details2 = get_activity_result(details, 'activity_fails_2', 'v2')
+    print_details(details)
+    assert details2 == 'Something went wrong'
 
 
 @docprint
@@ -117,9 +115,9 @@ def run_07():
 
     """
     result = test_07()
-    result = get_activity_result(result, 'activity2', 'v4')
-    print('Result: ' + json.dumps(result) + '\n')
-    assert result['status'] == 'finished'
+    result2 = get_activity_result(result, 'activity2', 'v4')
+    print_result(result)
+    assert result2['status'] == 'finished'
 
 
 @docprint
@@ -129,9 +127,9 @@ def run_08():
 
     """
     result = test_08()
-    result = get_activity_result(result, 'activity1', 'v5')
-    print('Result: ' + json.dumps(result) + '\n')
-    assert result['status'] == 'finished'
+    print_result(result)
+    result1 = get_activity_result(result, 'activity1', 'v5')
+    assert result1['status'] == 'finished'
 
 
 @docprint
@@ -141,10 +139,10 @@ def run_09():
 
     """
     result = test_09()
-    result = get_activity_result(result, 'activity4', 'v2')
-    print('Result: ' + json.dumps(result) + '\n')
-    assert [r for r in result.keys() if 'activity1' in r]
-    assert [r for r in result.keys() if 'activity2' in r]
+    print_result(result)
+    result4 = get_activity_result(result, 'activity4', 'v2')
+    assert [r for r in result4.keys() if 'activity1' in r]
+    assert [r for r in result4.keys() if 'activity2' in r]
 
 
 @docprint
@@ -193,10 +191,10 @@ def run_13():
 
     """
     result = test_13()
-    result = get_activity_result(result, 'activity4', 'v2')
-    print('Result: ' + json.dumps(result) + '\n')
-    assert [r for r in result.keys() if 'activity1' in r]
-    assert [r for r in result.keys() if 'activity2' in r]
+    print_result(result)
+    result4 = get_activity_result(result, 'activity4', 'v2')
+    assert [r for r in result4.keys() if 'activity1' in r]
+    assert [r for r in result4.keys() if 'activity2' in r]
 
 
 @docprint
@@ -206,20 +204,22 @@ def run_14():
 
     """
     result = test_14()
-    result = get_activity_result(result, 'test_child_workflow', 'v2')
-    print('Result: ' + json.dumps(result) + '\n')
-    assert [r for r in result.keys() if 'activity2' in r]
+    print_result(result)
+    result_cw = get_activity_result(result, 'test_child_workflow', 'v2')
+    assert [r for r in result_cw.keys() if 'activity2' in r]
 
 
 @docprint
 def run_15():
     """Test 15
+    Workflow schedules a child workflow.
 
     """
     result = test_15()
-    result = get_activity_result(result, 'test_child_workflow', 'v2')
-    print('Result: ' + json.dumps(result) + '\n')
-    assert result
+    print_result(result)
+    result_child_workflow = get_activity_result(result, 'test_child_workflow', 'v2')
+    result_activity = get_activity_result(result_child_workflow, 'activity1', 'v5')
+    assert result_activity['status'] == 'finished'
 
 
 @docprint
@@ -228,12 +228,11 @@ def run_16():
     Failing Task in ChildWorkflow
 
     """
-    # TODO assert specific results, print workflow result
     result = test_16()
+    print_result(result)
     result_child_workflow = get_activity_result(result, 'test_child_workflow', 'v2')
-    print(result_child_workflow)
-    print('Result: ' + json.dumps(result) + '\n')
-    assert result
+    result_activity = get_activity_result(result_child_workflow, 'activity_fails_2', 'v2')
+    assert result_activity == 'Something went wrong'
 
 @docprint
 def run_17():
@@ -241,16 +240,15 @@ def run_17():
     Activity generates tasks.
     """
     result = test_17()
+    print_result(result)
     result_activity_6 = get_activity_result(result, 'activity6', 'v1')
-    assert result_activity_6 == ['a.in', 'b.in']
-    print('Result: ' + json.dumps(result) + '\n')
-
+    assert set(result_activity_6) == set(['a.in', 'b.in'])
 
 
 tests = [run_01, run_02, run_03, run_04, run_05, run_06, run_07, run_08, run_09, run_10, run_11,
          run_12, run_13, run_14, run_15, run_16, run_17]
 
-
+tests = [run_13]
 try:
     [t() for t in tests]
 except (KeyboardInterrupt, SystemExit):
@@ -259,7 +257,6 @@ except (KeyboardInterrupt, SystemExit):
 
 print()
 print('All workflows finished successfully.')
-print('Waiting for workers to finish last poll and terminate.')
 
 worker1.terminate()
 worker2.terminate()

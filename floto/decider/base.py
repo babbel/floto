@@ -10,8 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class Base:
-    domain = None
-
     def __init__(self, swf=None):
         """Base class for deciders.
         Parameters
@@ -25,8 +23,8 @@ class Base:
         self.decisions = []
         self.run_id = None
         self.workflow_id = None
+        self.domain = None
 
-        self.max_polls = sys.maxsize
         self.swf = swf or floto.api.Swf()
         self.task_list = None
 
@@ -81,16 +79,11 @@ class Base:
             self._run()
 
     def _run(self):
-        # TODO remove poll counting before use in prodcuction
-        number_polls = 0
-        while (not self.terminate_decider) and (number_polls < self.max_polls):
+        while not self.terminate_decider:
             self.poll_for_decision()
-            number_polls += 1
-
             if self.task_token:
                 self.get_decisions()
                 self.complete()
-        logger.debug('Base._run ended. Polls: {}'.format(number_polls))
 
     def get_workflow_execution_description(self):
         return self.swf.describe_workflow_execution(self.domain, self.workflow_id, self.run_id)
