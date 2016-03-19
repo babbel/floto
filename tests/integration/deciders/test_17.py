@@ -5,7 +5,8 @@ from test_helper import get_result
 import floto
 import floto.api
 import floto.decider
-from floto.specs import DeciderSpec, ActivityTask, Generator
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask, Generator
 
 def test_17():
     rs = floto.specs.retry_strategy.InstantRetry(retries=2)

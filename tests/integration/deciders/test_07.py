@@ -9,10 +9,10 @@ import floto.decider
 
 def test_07():
     rs = floto.specs.retry_strategy.InstantRetry(retries=2)
-    timer_a = floto.specs.Timer(id_='TimerA', delay_in_seconds=15)
-    task_1 = floto.specs.ActivityTask(name='activity1', version='v5', retry_strategy=rs)
-    timer_b = floto.specs.Timer(id_='TimerB', delay_in_seconds=5, requires=[task_1])
-    task_2 = floto.specs.ActivityTask(name='activity2', version='v4', requires=[timer_b],
+    timer_a = floto.specs.task.Timer(id_='TimerA', delay_in_seconds=15)
+    task_1 = floto.specs.task.ActivityTask(name='activity1', version='v5', retry_strategy=rs)
+    timer_b = floto.specs.task.Timer(id_='TimerB', delay_in_seconds=5, requires=[task_1])
+    task_2 = floto.specs.task.ActivityTask(name='activity2', version='v4', requires=[timer_b],
                                       retry_strategy=rs)
 
     decider_spec = floto.specs.DeciderSpec(domain='floto_test',

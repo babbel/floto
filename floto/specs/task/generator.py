@@ -1,4 +1,4 @@
-from floto.specs import ActivityTask
+from floto.specs.task import ActivityTask
 
 class Generator(ActivityTask):
     def __init__(self, name=None, version=None, activity_id=None, requires=None, input=None,

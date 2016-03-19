@@ -5,7 +5,8 @@ from test_helper import get_result
 import floto
 import floto.api
 import floto.decider
-from floto.specs import ActivityTask, DeciderSpec
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask
 
 
 def test_01():

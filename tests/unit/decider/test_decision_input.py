@@ -1,14 +1,15 @@
 import pytest
 import floto.decider
+import floto.specs.task
 
 
 @pytest.fixture
 def task_1():
-    return floto.specs.ActivityTask(name='t', version='v1', input={'task_1':'val'})
+    return floto.specs.task.ActivityTask(name='t', version='v1', input={'task_1':'val'})
 
 @pytest.fixture
 def task_2():
-    return floto.specs.ActivityTask(name='t2', version='v1', input={'task_2':'val'})
+    return floto.specs.task.ActivityTask(name='t2', version='v1', input={'task_2':'val'})
 
 @pytest.fixture
 def history(init_response):
@@ -27,7 +28,7 @@ def di(history, execution_graph):
 
 @pytest.fixture
 def child_workflow():
-    return floto.specs.ChildWorkflow(workflow_type_name='cw', workflow_type_version='v1')
+    return floto.specs.task.ChildWorkflow(workflow_type_name='cw', workflow_type_version='v1')
 
 class TestDecisionInput:
     def test_get_input_task_activity_task(self, di, task_1, mocker):
@@ -91,7 +92,7 @@ class TestDecisionInput:
 
     def test_get_input_wo_generator_result(self, di, mocker, task_1):
         mocker.patch('floto.History.get_result_completed_activity')
-        g = floto.specs.Generator()
+        g = floto.specs.task.Generator()
         mocker.patch('floto.decider.ExecutionGraph.get_dependencies', return_value=[g])
         di._get_input(task_1, '')
         di.history.get_result_completed_activity.assert_not_called()

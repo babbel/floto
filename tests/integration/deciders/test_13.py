@@ -7,7 +7,8 @@ from test_helper import is_workflow_completed
 import floto
 import floto.api
 import floto.decider
-from floto.specs import ActivityTask, Timer, DeciderSpec
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask, Timer
 from floto.specs.retry_strategy import InstantRetry
 
 

@@ -1,6 +1,6 @@
 import pytest
 import floto.decider
-from floto.specs import ActivityTask, Timer, Generator
+from floto.specs.task import ActivityTask, Timer, Generator
 
 @pytest.fixture
 def task_1():

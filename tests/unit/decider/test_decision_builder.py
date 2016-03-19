@@ -2,7 +2,8 @@ import pytest
 import json
 import datetime
 import floto.decider
-from floto.specs import ActivityTask, DeciderSpec, Timer, ChildWorkflow
+from floto.specs.task import ActivityTask, Timer, ChildWorkflow
+from floto.specs import DeciderSpec
 import floto.specs.retry_strategy
 
 @pytest.fixture
@@ -259,7 +260,7 @@ class TestDecisionBuilder(object):
         assert builder.is_terminate_workflow() == True
 
     def test_get_decision_schedule_activity_with_activity_task(self, mocker, builder):
-        task = floto.specs.ActivityTask(name='at', version='v', activity_id='a_id')
+        task = floto.specs.task.ActivityTask(name='at', version='v', activity_id='a_id')
         mocker.patch('floto.decider.DecisionInput.get_input_task', return_value='i')
         d = builder.get_decision_schedule_activity(task)
         assert isinstance(d, floto.decisions.ScheduleActivityTask)
@@ -275,20 +276,21 @@ class TestDecisionBuilder(object):
         assert 'wft_name' in d.workflow_id
 
     def test_get_decision_schedule_activity_with_timer(self, mocker, builder):
-        task = floto.specs.Timer(id_='t_id', delay_in_seconds=10)
+        task = floto.specs.task.Timer(id_='t_id', delay_in_seconds=10)
         d = builder.get_decision_schedule_activity(task)
         assert isinstance(d, floto.decisions.StartTimer)
         assert d.start_to_fire_timeout == 10
 
     def test_get_decision_after_activity_completion(self, mocker, builder, empty_history, task_1):
         task_1.id_ = 'a_id'
-        task_2 = floto.specs.Timer(id_='t_id', delay_in_seconds=10)
+        task_2 = floto.specs.task.Timer(id_='t_id', delay_in_seconds=10)
         tasks = [task_1, task_2]
         mocker.patch('floto.History.get_id_activity_task_event', return_value='a_id')
         mocker.patch('floto.decider.DecisionBuilder.get_tasks_to_be_scheduled', return_value=tasks)
         mocker.patch('floto.decider.DecisionInput.get_input_task', return_value={'foo':'bar'})
         builder.history = empty_history
-        d = builder.get_decisions_after_activity_completion([{'eventType':'ActivityTaskCompleted'}])
+        events = [{'eventType':'ActivityTaskCompleted'}]
+        d = builder.get_decisions_after_activity_completion(events)
         builder.get_tasks_to_be_scheduled.assert_called_once_with(['a_id'])
         assert len(d) == 2
         assert isinstance(d[0], floto.decisions.ScheduleActivityTask)
@@ -297,23 +299,23 @@ class TestDecisionBuilder(object):
         assert d[1].timer_id == 't_id'
 
     def test_completed_have_depending_tasks_with_depending(self, mocker, builder, empty_history):
-        a = floto.specs.ActivityTask(name='a', version='v', activity_id='a')
-        b = floto.specs.ActivityTask(name='b', version='v', activity_id='b', requires=[a])
+        a = floto.specs.task.ActivityTask(name='a', version='v', activity_id='a')
+        b = floto.specs.task.ActivityTask(name='b', version='v', activity_id='b', requires=[a])
         d = floto.decider.DecisionBuilder([a,b], 'atl')
         d.history = empty_history
         mocker.patch('floto.History.get_id_task_event', return_value='a')
         assert d.completed_have_depending_tasks(completed_tasks=['a'])
 
     def test_completed_have_depending_tasks_wo_depending(self, mocker, builder, empty_history):
-        a = floto.specs.ActivityTask(name='a', version='v', activity_id='a')
-        b = floto.specs.ActivityTask(name='b', version='v', activity_id='b', requires=[a])
+        a = floto.specs.task.ActivityTask(name='a', version='v', activity_id='a')
+        b = floto.specs.task.ActivityTask(name='b', version='v', activity_id='b', requires=[a])
         d = floto.decider.DecisionBuilder([a,b], 'atl')
         d.history = empty_history
         mocker.patch('floto.History.get_id_task_event', return_value='b')
         assert not d.completed_have_depending_tasks(completed_tasks=['b'])
 
     def test_outgoing_vertices_completed(self, mocker, builder, empty_history):
-        b = floto.specs.ActivityTask(name='b', version='v', activity_id='b')
+        b = floto.specs.task.ActivityTask(name='b', version='v', activity_id='b')
         builder.history = empty_history
         mocker.patch('floto.decider.ExecutionGraph.outgoing_vertices', return_value=[b])
         mocker.patch('floto.History.is_task_completed', return_value=True)
@@ -321,7 +323,7 @@ class TestDecisionBuilder(object):
         builder.history.is_task_completed.assert_called_once_with(b)
 
     def test_outgoing_vertices_not_completed(self, mocker, builder, empty_history):
-        b = floto.specs.ActivityTask(name='b', version='v', activity_id='b')
+        b = floto.specs.task.ActivityTask(name='b', version='v', activity_id='b')
         builder.history = empty_history
         mocker.patch('floto.decider.ExecutionGraph.outgoing_vertices', return_value=[b])
         mocker.patch('floto.History.is_task_completed', return_value=False)
@@ -329,10 +331,10 @@ class TestDecisionBuilder(object):
         builder.history.is_task_completed.assert_called_once_with(b)
         
     def test_get_task_to_be_scheduled(self, builder):
-        a = floto.specs.ActivityTask(name='a', version='v', activity_id='a')
-        b = floto.specs.ActivityTask(name='b', version='v', activity_id='b')
-        c = floto.specs.ActivityTask(name='c', version='v', activity_id='c', requires=[a,b])
-        d = floto.specs.ActivityTask(name='d', version='v', activity_id='d', requires=[b])
+        a = floto.specs.task.ActivityTask(name='a', version='v', activity_id='a')
+        b = floto.specs.task.ActivityTask(name='b', version='v', activity_id='b')
+        c = floto.specs.task.ActivityTask(name='c', version='v', activity_id='c', requires=[a,b])
+        d = floto.specs.task.ActivityTask(name='d', version='v', activity_id='d', requires=[b])
 
         graph = floto.decider.ExecutionGraph(activity_tasks=[a,b,c,d])
         builder.execution_graph = graph
@@ -342,8 +344,8 @@ class TestDecisionBuilder(object):
         assert set([t.id_ for t in tasks]) == set(['c', 'd'])
 
     def test_get_task_to_be_scheduled_single_id(self):
-        t1 = floto.specs.ActivityTask(name='t1', version='v', activity_id='t1')
-        t2 = floto.specs.ActivityTask(name='t2', version='v', activity_id='t2', requires=[t1])
+        t1 = floto.specs.task.ActivityTask(name='t1', version='v', activity_id='t1')
+        t2 = floto.specs.task.ActivityTask(name='t2', version='v', activity_id='t2', requires=[t1])
         d = floto.decider.DecisionBuilder([t1,t2], 'atl')
         d.history = empty_history 
         d.history.is_task_completed = lambda x: {t1:True, t2:False}[x]
@@ -351,10 +353,10 @@ class TestDecisionBuilder(object):
         assert tasks == [t2]
 
     def test_get_task_to_be_scheduled_single_id_graph2(self):
-        a = floto.specs.ActivityTask(name='a', version='v', activity_id='a')
-        b = floto.specs.ActivityTask(name='b', version='v', activity_id='b')
-        c = floto.specs.ActivityTask(name='c', version='v', activity_id='c', requires=[a,b])
-        d = floto.specs.ActivityTask(name='d', version='v', activity_id='d', requires=[b])
+        a = floto.specs.task.ActivityTask(name='a', version='v', activity_id='a')
+        b = floto.specs.task.ActivityTask(name='b', version='v', activity_id='b')
+        c = floto.specs.task.ActivityTask(name='c', version='v', activity_id='c', requires=[a,b])
+        d = floto.specs.task.ActivityTask(name='d', version='v', activity_id='d', requires=[b])
 
         d = floto.decider.DecisionBuilder([a,b,c,d], 'atl')
         d.history = empty_history 
@@ -363,25 +365,25 @@ class TestDecisionBuilder(object):
         assert [t.id_ for t in d.get_tasks_to_be_scheduled_single_id('b')] == ['c', 'd']
 
     def test_uniqify_activity_tasks_single_tasks(self, builder):
-        t1 = floto.specs.ActivityTask(name='t1', version='v', activity_id='t1')
+        t1 = floto.specs.task.ActivityTask(name='t1', version='v', activity_id='t1')
         tasks = builder.uniqify_activity_tasks([t1])
         assert tasks == [t1]
 
     def test_uniqify_activity_tasks_two_tasks(self, builder):
-        t1 = floto.specs.ActivityTask(name='t1', version='v', activity_id='t1')
-        t2 = floto.specs.ActivityTask(name='t2', version='v', activity_id='t2', requires=[t1])
+        t1 = floto.specs.task.ActivityTask(name='t1', version='v', activity_id='t1')
+        t2 = floto.specs.task.ActivityTask(name='t2', version='v', activity_id='t2', requires=[t1])
         tasks = builder.uniqify_activity_tasks([t1,t2])
         assert set(tasks) == set([t1, t2])
 
     def test_uniqify_activity_tasks_equal_tasks(self, builder):
-        t1 = floto.specs.ActivityTask(name='t1', version='v', activity_id='t1')
-        t2 = floto.specs.ActivityTask(name='t1', version='v', activity_id='t1')
+        t1 = floto.specs.task.ActivityTask(name='t1', version='v', activity_id='t1')
+        t2 = floto.specs.task.ActivityTask(name='t1', version='v', activity_id='t1')
         tasks = builder.uniqify_activity_tasks([t1,t2])
         assert len(tasks) == 1
         assert tasks[0].id_ == 't1'
 
     def test_get_decision_schedule_activity_task(self, builder):
-        at = floto.specs.ActivityTask(name='at_name', version='at_version', activity_id='at_id')
+        at = floto.specs.task.ActivityTask(name='at_name', version='at_version', activity_id='id')
         d = builder.get_decision_schedule_activity_task(at)
         assert isinstance(d, floto.decisions.ScheduleActivityTask)
         assert d.activity_type.name == at.name
@@ -390,13 +392,13 @@ class TestDecisionBuilder(object):
         assert d.task_list == builder.activity_task_list
 
     def test_get_decision_start_timer(self, builder):
-        timer_task = floto.specs.Timer(id_='t_id', delay_in_seconds=60)
+        timer_task = floto.specs.task.Timer(id_='t_id', delay_in_seconds=60)
         decision = builder.get_decision_start_timer(timer_task)
         assert decision.start_to_fire_timeout == 60
         assert decision.timer_id == 't_id'
 
     def test_get_decision_start_child_workflow(self, builder):
-        cw_task = floto.specs.ChildWorkflow(workflow_type_name='wft_name', 
+        cw_task = floto.specs.task.ChildWorkflow(workflow_type_name='wft_name', 
                 workflow_type_version='v1')
         d = builder.get_decision_start_child_workflow_execution(child_workflow_task=cw_task)
         assert isinstance(d, floto.decisions.StartChildWorkflowExecution)
@@ -404,7 +406,7 @@ class TestDecisionBuilder(object):
         assert d.workflow_type['version'] == 'v1'
 
     def test_get_decision_start_child_workflow_w_attributes(self, builder):
-        cw_task = floto.specs.ChildWorkflow(workflow_type_name='wft_name', 
+        cw_task = floto.specs.task.ChildWorkflow(workflow_type_name='wft_name', 
                 workflow_type_version='v1',
                 task_list='tl')
         d = builder.get_decision_start_child_workflow_execution(child_workflow_task=cw_task, 
@@ -450,7 +452,7 @@ class TestDecisionBuilder(object):
         assert builder.all_workflow_tasks_finished(['t'])
         
     def test_update_execution_graph(self, mocker, builder):
-        tasks = [floto.specs.ActivityTask(name='n', version='v1')]
+        tasks = [floto.specs.task.ActivityTask(name='n', version='v1')]
         generator_result = json.loads(floto.specs.JSONEncoder.dump_object(tasks))
         mocker.patch('floto.History.get_result_completed_activity', return_value=generator_result)
         mocker.patch('floto.decider.ExecutionGraph.update', return_value='eg')
@@ -459,11 +461,11 @@ class TestDecisionBuilder(object):
         new_tasks_arg = builder.execution_graph.update.call_args[0][1]
         assert builder.execution_graph.update.call_args[0][0] == 'generator'
         assert new_tasks_arg[0].name == 'n'
-        assert isinstance(new_tasks_arg[0], floto.specs.ActivityTask)
+        assert isinstance(new_tasks_arg[0], floto.specs.task.ActivityTask)
 
     def test_get_generators(self, builder, mocker):
         mocker.patch('floto.History.get_id_task_event', return_value='g_id')
-        generator = floto.specs.Generator(name='generator', version='v1')
+        generator = floto.specs.task.Generator(name='generator', version='v1')
         builder.execution_graph._tasks_by_id = {'g_id':generator}
         generators = builder._get_generators([{'eventType':'ActivityTaskCompleted'}])
         assert len(generators) == 1

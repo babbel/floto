@@ -135,13 +135,13 @@ class DecisionBuilder:
         return [d]
 
     def get_decision_schedule_activity(self, task, is_failed_task=False):
-        if isinstance(task, floto.specs.ActivityTask):
+        if isinstance(task, floto.specs.task.ActivityTask):
             input_ = self.decision_input.get_input_task(task, is_failed_task)
             return self.get_decision_schedule_activity_task(task, input_)
-        elif isinstance(task, floto.specs.ChildWorkflow):
+        elif isinstance(task, floto.specs.task.ChildWorkflow):
             input_ = self.decision_input.get_input_task(task, is_failed_task)
             return self.get_decision_start_child_workflow_execution(task, input_)
-        elif isinstance(task, floto.specs.Timer):
+        elif isinstance(task, floto.specs.task.Timer):
             return self.get_decision_start_timer(task)
         else:
             m = 'Do not know how to get decision for task of type: {}'.format(type(task))
@@ -191,7 +191,7 @@ class DecisionBuilder:
     def completed_contain_generator(self, completed_tasks):
         for task in completed_tasks:
             id_ = self.history.get_id_task_event(task)
-            if isinstance(self.execution_graph.tasks_by_id[id_], floto.specs.Generator):
+            if isinstance(self.execution_graph.tasks_by_id[id_], floto.specs.task.Generator):
                 return True
 
     def completed_have_depending_tasks(self, completed_tasks):
@@ -257,11 +257,11 @@ class DecisionBuilder:
         activity.
         Returns
         -------
-        list: <floto.specs.Generator>
+        list: <floto.specs.task.Generator>
         """
         activity_ids = [self.history.get_id_task_event(e) for e in completed_events 
                 if e['eventType'] == 'ActivityTaskCompleted']
         activities = [self.execution_graph.tasks_by_id[id_] for id_ in activity_ids]
-        generators = [g for g in activities if isinstance(g, floto.specs.Generator)]
+        generators = [g for g in activities if isinstance(g, floto.specs.task.Generator)]
         return generators
 

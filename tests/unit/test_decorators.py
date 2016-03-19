@@ -1,5 +1,6 @@
 import pytest
 import floto
+import floto.specs.task
 
 class TestDecorators():
     def test_activity(self):
@@ -15,7 +16,7 @@ class TestDecorators():
         assert floto.ACTIVITY_FUNCTIONS['my_func:v2']({'foo':'bar'}) == {'foo':'bar'}
 
     def test_generator(self):
-        task = floto.specs.ActivityTask(name='n', version='v')
+        task = floto.specs.task.ActivityTask(name='n', version='v')
         @floto.generator(name='my_generator', version='v1')
         def my_generator(context):
             return [task]

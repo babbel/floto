@@ -8,12 +8,12 @@ class DecisionInput:
         self._execution_graph = execution_graph
 
     def get_input_task(self, task, is_failed_task=False):
-        if isinstance(task, floto.specs.ActivityTask):
+        if isinstance(task, floto.specs.task.ActivityTask):
             if is_failed_task:
                 return self._get_input_scheduled_task(task.id_, 'ActivityTaskScheduled')
             else:
                 return self._get_input(task, 'activity_task')
-        elif isinstance(task, floto.specs.ChildWorkflow):
+        elif isinstance(task, floto.specs.task.ChildWorkflow):
             if is_failed_task:
                 return self._get_input_scheduled_task(task.id_, 
                         'StartChildWorkflowExecutionInitiated')
@@ -55,7 +55,7 @@ class DecisionInput:
         dependencies = self._execution_graph.get_dependencies(task.id_)
         if dependencies:
             for d in dependencies:
-                if not isinstance(d, floto.specs.Generator):
+                if not isinstance(d, floto.specs.task.Generator):
                     result = self.history.get_result_completed_activity(d)
                     if result:
                         input_[d.id_] = result

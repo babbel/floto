@@ -187,9 +187,9 @@ class History:
         return id_
 
     def get_number_activity_failures(self, task):
-        if isinstance(task, floto.specs.ActivityTask):
+        if isinstance(task, floto.specs.task.ActivityTask):
             return self.get_number_activity_task_failures(task.id_)
-        elif isinstance(task, floto.specs.ChildWorkflow):
+        elif isinstance(task, floto.specs.task.ChildWorkflow):
             return self.get_number_child_workflow_failures(task.id_)
         else:
             return 0
@@ -268,9 +268,9 @@ class History:
         return input
 
     def get_result_completed_activity(self, task):
-        if isinstance(task, floto.specs.ActivityTask):
+        if isinstance(task, floto.specs.task.ActivityTask):
             c = self.get_events_by_task_id_and_type(task.id_, 'ActivityTaskCompleted')
-        elif isinstance(task, floto.specs.ChildWorkflow):
+        elif isinstance(task, floto.specs.task.ChildWorkflow):
             c =  self.get_events_by_task_id_and_type(task.id_, 'ChildWorkflowExecutionCompleted')
         else:
             c = None
@@ -296,13 +296,13 @@ class History:
         """
         Parameter
         --------
-        task: floto.specs.ActivityTask or floto.specs.Timer
+        task: floto.specs.task.ActivityTask or floto.specs.task.Timer
         """
-        if isinstance(task, floto.specs.ActivityTask):
+        if isinstance(task, floto.specs.task.ActivityTask):
             return self.is_activity_task_completed(task.id_)
-        elif isinstance(task, floto.specs.Timer):
+        elif isinstance(task, floto.specs.task.Timer):
             return self.is_timer_task_completed(task.id_)
-        elif isinstance(task, floto.specs.ChildWorkflow):
+        elif isinstance(task, floto.specs.task.ChildWorkflow):
             return self.is_child_workflow_completed(task.id_)
         else:
             raise ValueError('Unknown type: {}'.format(task.__class__.__name__))

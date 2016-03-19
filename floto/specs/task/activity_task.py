@@ -1,6 +1,6 @@
 import json
 
-from floto.specs import Task
+from floto.specs.task import Task
 
 
 class ActivityTask(Task):

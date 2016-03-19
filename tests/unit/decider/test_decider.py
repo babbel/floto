@@ -1,5 +1,6 @@
 import pytest
-from floto.specs import DeciderSpec, ActivityTask
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask
 import floto.decider
 from unittest.mock import Mock
 

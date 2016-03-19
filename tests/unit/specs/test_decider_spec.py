@@ -36,13 +36,13 @@ class TestDeciderSpec():
                      'task_list':'tl',
                      'activity_task_list':'atl',
                      'repeat_workflow':True,
-                     'activity_tasks': [{'type':'floto.specs.ActivityTask',
+                     'activity_tasks': [{'type':'floto.specs.task.ActivityTask',
                                          'name':'name1',
                                          'activity_id':'id1',
                                          'retry_strategy':{
                                              'type':'floto.specs.retry_strategy.InstantRetry',
                                              'retries':3}},
-                                         {'type':'floto.specs.ActivityTask',
+                                         {'type':'floto.specs.task.ActivityTask',
                                           'name':'name2',
                                           'activity_id':'id2'}]
                                          }

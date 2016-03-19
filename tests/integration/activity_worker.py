@@ -82,9 +82,9 @@ def activity_5():
 @floto.generator(name='generator1', version='v1')
 def generator1():
     rs = floto.specs.retry_strategy.InstantRetry(retries=2)
-    task_1 = floto.specs.ActivityTask(name='activity4', version='v2', retry_strategy=rs, 
+    task_1 = floto.specs.task.ActivityTask(name='activity4', version='v2', retry_strategy=rs, 
             input={'file':'a.in'})
-    task_2 = floto.specs.ActivityTask(name='activity4', version='v2', retry_strategy=rs,
+    task_2 = floto.specs.task.ActivityTask(name='activity4', version='v2', retry_strategy=rs,
             input={'file':'b.in'})
     return [task_1, task_2]
 

@@ -6,7 +6,8 @@ from test_helper import get_fail_workflow_execution
 import floto
 import floto.api
 import floto.decider
-from floto.specs import ActivityTask, DeciderSpec, ChildWorkflow
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask, ChildWorkflow
 from floto.specs.retry_strategy import InstantRetry
 
 

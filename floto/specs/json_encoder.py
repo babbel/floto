@@ -5,17 +5,18 @@ import sys
 
 import floto
 import floto.specs
+import floto.specs.task
 import floto.specs.retry_strategy
 
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, (floto.specs.ActivityTask,
-                            floto.specs.DeciderSpec,
+        if isinstance(obj, (floto.specs.DeciderSpec,
                             floto.specs.retry_strategy.Strategy,
-                            floto.specs.Timer,
-                            floto.specs.ChildWorkflow,
-                            floto.specs.Generator)):
+                            floto.specs.task.ActivityTask,
+                            floto.specs.task.Timer,
+                            floto.specs.task.ChildWorkflow,
+                            floto.specs.task.Generator)):
             return self.default_from_namespace(obj)
 
         if isinstance(obj, (dt.datetime,

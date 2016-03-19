@@ -13,7 +13,7 @@ def daemon(history):
 
 @pytest.fixture
 def decider_spec():
-    task1 = floto.specs.ActivityTask(name='at', version='v1')
+    task1 = floto.specs.task.ActivityTask(name='at', version='v1')
     spec = floto.specs.DeciderSpec(activity_tasks=[task1])
     return spec
 

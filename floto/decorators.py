@@ -17,7 +17,7 @@ def check_type_generator_output(func):
         message = 'Generators must return list(<floto.spec.Task>)'
         if not isinstance(result, list):
             raise ValueError(message)
-        if not [isinstance(t, floto.specs.Task) for t in result]:
+        if not [isinstance(t, floto.specs.task.Task) for t in result]:
             raise ValueError(message)
         return result
     return wrapper

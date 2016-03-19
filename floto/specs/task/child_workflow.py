@@ -1,4 +1,4 @@
-from floto.specs import Task
+from floto.specs.task import Task
 import json
 
 

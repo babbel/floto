@@ -5,7 +5,8 @@ from test_helper import get_result
 
 import floto
 import floto.api
-from floto.specs import ActivityTask, Timer, DeciderSpec
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask, Timer
 from floto.specs.retry_strategy import InstantRetry
 
 
