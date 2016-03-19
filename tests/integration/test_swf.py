@@ -244,11 +244,9 @@ def run_17():
     result_activity_6 = get_activity_result(result, 'activity6', 'v1')
     assert set(result_activity_6) == set(['a.in', 'b.in'])
 
-
 tests = [run_01, run_02, run_03, run_04, run_05, run_06, run_07, run_08, run_09, run_10, run_11,
          run_12, run_13, run_14, run_15, run_16, run_17]
 
-tests = [run_13]
 try:
     [t() for t in tests]
 except (KeyboardInterrupt, SystemExit):
