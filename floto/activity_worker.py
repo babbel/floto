@@ -52,7 +52,7 @@ class ActivityWorker:
         self.domain = domain
         self.task_heartbeat_in_seconds = task_heartbeat_in_seconds
         if self.task_heartbeat_in_seconds is None:
-            self.task_heartbeat_in_seconds = 120
+            self.task_heartbeat_in_seconds = 90
 
         self.identity = identity
         if self.identity is None:

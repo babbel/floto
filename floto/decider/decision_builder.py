@@ -10,12 +10,12 @@ logger = logging.getLogger(__name__)
 import json
 
 class DecisionBuilder:
-    def __init__(self, activity_tasks, activity_task_list):
+    def __init__(self, activity_tasks, default_activity_task_list):
         self.workflow_fail = False
         self.workflow_complete = False
         self.initial_activity_tasks = activity_tasks
         self.history = None
-        self.activity_task_list = activity_task_list
+        self.default_activity_task_list = default_activity_task_list
         self.decision_input = floto.decider.DecisionInput()
 
         self._execution_graph = None
@@ -143,7 +143,7 @@ class DecisionBuilder:
             last_event_id = self.history.get_event_attributes(event)['startedEventId']
             first_event_id = self.history.get_id_previous_started(event)
             builder = floto.decider.DecisionBuilder(copy.deepcopy(self.initial_activity_tasks), 
-                    self.activity_task_list)
+                    self.default_activity_task_list)
             builder.first_event_id = first_event_id
             builder.last_event_id = last_event_id
             builder._set_history(self.history)
@@ -177,9 +177,10 @@ class DecisionBuilder:
     def get_decision_schedule_activity_task(self, activity_task=None, input=None):
         activity_type = floto.api.ActivityType(name=activity_task.name,
                                                version=activity_task.version)
+        task_list = activity_task.task_list or self.default_activity_task_list
         decision = floto.decisions.ScheduleActivityTask(activity_type=activity_type,
                 activity_id=activity_task.id_,
-                task_list=self.activity_task_list, input=input)
+                task_list=task_list, input=input)
         return decision
 
     def get_decision_start_timer(self, timer_task):

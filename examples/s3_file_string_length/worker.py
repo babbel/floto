@@ -50,3 +50,4 @@ def sum_length(context):
 
 floto.ActivityWorker(task_list='s3_files_worker', domain='floto_test', 
         task_heartbeat_in_seconds=7).run()
+

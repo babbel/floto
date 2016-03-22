@@ -54,7 +54,7 @@ class TestDecisionBuilder(object):
         assert [t.id_ for t in b.execution_graph.tasks] == [task_1.id_]
         assert b.workflow_fail == False
         assert b.workflow_complete == False
-        assert b.activity_task_list == 'atl'
+        assert b.default_activity_task_list == 'atl'
 
     def test_get_decisions(self, mocker, builder):
         history = type('History', (object,), {'previous_decision_id':0,
@@ -395,9 +395,16 @@ class TestDecisionBuilder(object):
         d = builder.get_decision_schedule_activity_task(at)
         assert isinstance(d, floto.decisions.ScheduleActivityTask)
         assert d.activity_type.name == at.name
-        assert d.activity_type.name == at.name
+        assert d.activity_type.version == at.version
         assert d.activity_id == at.id_
-        assert d.task_list == builder.activity_task_list
+        assert d.task_list == builder.default_activity_task_list
+
+    def test_get_decision_schedule_activity_task(self, builder):
+        at = floto.specs.task.ActivityTask(name='at_name', version='at_version', activity_id='id',
+                task_list='tl_of_task')
+        d = builder.get_decision_schedule_activity_task(at)
+        assert isinstance(d, floto.decisions.ScheduleActivityTask)
+        assert d.task_list == at.task_list 
 
     def test_get_decision_start_timer(self, builder):
         timer_task = floto.specs.task.Timer(id_='t_id', delay_in_seconds=60)

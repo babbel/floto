@@ -1,33 +1,18 @@
 import floto
 import logging
-from floto.specs import ActivityTask, DeciderSpec, ChildWorkflow
+from floto.specs.task import ActivityTask, ChildWorkflow
+from floto.specs import DeciderSpec
 import floto.decider
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------- #
-# Create Activity Tasks and Decider
-# ---------------------------------- #
-rs = floto.specs.retry_strategy.InstantRetry(retries=2)
-a1 = ActivityTask(name='demo_step1', version='v2', retry_strategy=rs)
-a2 = ActivityTask(name='demo_step2', version='v2', requires=[a1], retry_strategy=rs, 
-        input={'start_val': 1} )
-a2a = ActivityTask(name='demo_step2', version='v2', requires=[a1], retry_strategy=rs, 
-        input={'start_val': 2} )
-a4 = ActivityTask(name='demo_step4', version='v1', requires=[a2, a2a], retry_strategy=rs)
-
-cw1 = ChildWorkflow(workflow_type_name='demo_flow_child_workflow', workflow_type_version='v1', 
-        task_list='demo_step_decisions_child', requires=[a4], retry_strategy=rs)
-
 decider_spec = DeciderSpec(domain='floto_test',
-                           task_list='demo_step_decisions_philipp',
-                           activity_tasks=[a1, a2, a2a, a4, cw1],
-                           activity_task_list='demo_step_activities_philipp',
+                           task_list='s3_files',
+                           default_activity_task_list='s3_files_worker',
                            terminate_decider_after_completion=False)
 
-decider = floto.decider.Decider(decider_spec=decider_spec)
+decider = floto.decider.DynamicDecider(decider_spec=decider_spec)
+decider.run(separate_process=True)
 
-# ---------------------------------- #
-# Start the decider
-# ---------------------------------- #
-decider.run()
+decider2 = floto.decider.DynamicDecider(decider_spec=decider_spec)
+decider2.run(separate_process=True)

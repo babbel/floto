@@ -15,7 +15,7 @@ def test_08():
     decider_spec = floto.specs.DeciderSpec(domain='floto_test',
                                            task_list=str(uuid.uuid4()),
                                            activity_tasks=[activity_task_1],
-                                           activity_task_list='floto_activities',
+                                           default_activity_task_list='floto_activities',
                                            repeat_workflow=True)
 
     decider = DeciderEarlyExit(repetitions=2, decider_spec=decider_spec)

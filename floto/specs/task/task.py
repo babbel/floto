@@ -1,5 +1,5 @@
 import hashlib
-import json
+import floto.specs
 
 class Task(object):
     """Base class for tasks, e.g. ActivityTask, Timer."""
@@ -16,7 +16,7 @@ class Task(object):
         str
 
         """
-        input_string = json.dumps(input, sort_keys=True)
+        input_string = floto.specs.JSONEncoder.dump_object(input)
 
         if self.requires:
             requires_string = ''.join([t.id_ for t in self.requires])

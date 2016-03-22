@@ -21,7 +21,7 @@ def test_07():
                                                            timer_b,
                                                            task_1,
                                                            task_2],
-                                           activity_task_list='floto_activities',
+                                           default_activity_task_list='floto_activities',
                                            terminate_decider_after_completion=True)
 
     decider = floto.decider.Decider(decider_spec=decider_spec)

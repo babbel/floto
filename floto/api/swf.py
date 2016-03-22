@@ -41,7 +41,7 @@ class Swf(object):
         return session.client('swf', config=config)
 
     def poll_for_decision_task_page(self, domain=None, task_list=None, page_token=None,
-                                    page_size=None):
+                                    page_size=None, identity=None):
 
         if (not domain) or (not task_list):
             raise ValueError('poll_for_decision needs domain and task list.')
@@ -52,6 +52,8 @@ class Swf(object):
                 }
         if page_token:
             args['nextPageToken'] = page_token
+        if identity:
+            args['identity'] = identity
 
         args['maximumPageSize'] = page_size if page_size else self.default_maximum_page_size
 

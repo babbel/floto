@@ -14,12 +14,12 @@ def decider_spec(task):
             terminate_decider_after_completion=True)
     return decider_spec
 
-# TODO test everything
+@pytest.fixture
+def decider(decider_spec):
+    return floto.decider.DynamicDecider(decider_spec, identity='d_id')
+
 class TestDynamicDecider:
-    def test_init(self, decider_spec):
-        d = floto.decider.DynamicDecider(decider_spec, identity='d_id')
-        assert d.decider_spec == decider_spec
-        assert d.identity == 'd_id'
-
-
+    def test_init(self, decider, decider_spec):
+        assert decider.decider_spec == decider_spec
+        assert decider.identity == 'd_id'
 

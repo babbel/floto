@@ -17,7 +17,7 @@ def decider_spec_child_workflow():
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list='child_workflow_task_list',
                                activity_tasks=[task_1],
-                               activity_task_list='floto_activities',
+                               default_activity_task_list='floto_activities',
                                terminate_decider_after_completion=True)
     return decider_spec
 
@@ -30,6 +30,7 @@ def decider_spec_workflow():
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),
                                activity_tasks=[task_1, child_workflow],
+                               default_activity_task_list='floto_activities',
                                terminate_decider_after_completion=True)
     return decider_spec
 

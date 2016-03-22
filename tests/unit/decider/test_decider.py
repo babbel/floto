@@ -30,10 +30,11 @@ def decider(decider_spec):
 
 class TestDecider():
     def test_init_with_decider_spec(self, decider_spec, task_1):
-        d =  floto.decider.Decider(decider_spec=decider_spec)
+        d =  floto.decider.Decider(decider_spec=decider_spec, identity='did')
         assert isinstance(d.decider_spec.activity_tasks, list)
         assert d.decider_spec.activity_tasks[0] == task_1 
         assert d.repeat_workflow == False
+        assert d.identity == 'did'
     
     def test_init_raises_wo_domain(self, decider_spec):
         decider_spec.domain = None
@@ -47,12 +48,12 @@ class TestDecider():
 
     def test_default_activity_task_list(self, decider_spec):
         d =  floto.decider.Decider(decider_spec=decider_spec)
-        assert d.activity_task_list == 'floto_activities'
+        assert not d.default_activity_task_list
 
     def test_activity_task_list(self, decider_spec):
-        decider_spec.activity_task_list = 'atl'
+        decider_spec.default_activity_task_list = 'atl'
         d =  floto.decider.Decider(decider_spec=decider_spec)
-        assert d.activity_task_list == 'atl'
+        assert d.default_activity_task_list == 'atl'
 
     def test_domain(self, decider_spec):
         decider_spec.domain = 'my_domain'

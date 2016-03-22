@@ -31,7 +31,7 @@ class TestActivityWorker:
 
     def test_init_with_defaults(self):
         worker = floto.ActivityWorker()
-        assert worker.task_heartbeat_in_seconds == 120
+        assert worker.task_heartbeat_in_seconds == 90
 
     def test_terminate_activity_worker(self):
         worker = floto.ActivityWorker()

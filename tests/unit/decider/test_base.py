@@ -64,12 +64,16 @@ class TestBase:
 
     def test_poll_for_decisions(self, mocker, init_response):
         mocker.patch('floto.api.Swf.poll_for_decision_task_page', return_value=init_response)
-        d = floto.decider.Base()
+        d = floto.decider.Base(identity='did')
+        d.domain = 'd'
+        d.task_list = 't'
         d.poll_for_decision()
         assert d.history
         assert d.task_token == 'val_task_token'
         assert d.run_id == 'val_run_id'
         assert d.workflow_id == 'val_workflow_id'
+        d.swf.poll_for_decision_task_page.assert_called_once_with(domain='d', task_list='t', 
+                identity='did')
 
     def test_poll_for_decisions_with_empty_response(self, mocker):
         mocker.patch('floto.api.Swf.poll_for_decision_task_page', return_value={})

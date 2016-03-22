@@ -1,8 +1,8 @@
 import multiprocessing
 import sys
+import socket
 
 import floto.api
-# import floto.decisions
 
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class Base:
-    def __init__(self, swf=None):
+    def __init__(self, swf=None, identity=None):
         """Base class for deciders.
         Parameters
         ----------
@@ -24,6 +24,7 @@ class Base:
         self.run_id = None
         self.workflow_id = None
         self.domain = None
+        self.identity = identity or socket.getfqdn(socket.gethostname())
 
         self.swf = swf or floto.api.Swf()
         self.task_list = None
@@ -56,7 +57,8 @@ class Base:
         """Polls for decision tasks. If a new decision task has been scheduled, the response, 
         history and task token are stored in the corresponding instance variables."""
         self.last_response = self.swf.poll_for_decision_task_page(domain=self.domain,
-                                                                  task_list=self.task_list)
+                                                                  task_list=self.task_list,
+                                                                  identity=self.identity)
         if 'taskToken' in self.last_response:
             self.task_token = self.last_response['taskToken']
             self.history = floto.History(domain=self.domain, task_list=self.task_list,

@@ -26,6 +26,5 @@ class ActivityTask(Task):
         self.input = input
         self.id_ = activity_id or self._default_id(name, version, input)
         self.retry_strategy = retry_strategy
-        # TODO test
         self.task_list = task_list
 

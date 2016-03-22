@@ -1,58 +1,31 @@
 import floto
 import logging
 import random
+import datetime as dt
 
 logger = logging.getLogger(__name__)
 
 domain = 'floto_test'
-activity_task_list = 'demo_step_activities_philipp'
+activity_task_list = 's3_files_worker'
 
-# ---------------------------------- #
-# Create the activity functions
-# ---------------------------------- #
-# Register floto activities. The context parameter carries the input information. The context
-# parameter is not mandatory.
-@floto.activity(name='demo_step1', version='v2')
-def step1(context):
-    logger.debug('Running set_random_number. Context: ', context)
-    print(context)
-    try:
-        startval = context['workflow'].get('start_val')
-    except KeyError:
-        startval = 0
-        pass
+@floto.activity(name='copyFiles', version='1')
+def copy_files(context):
+    from_date_iso = context['activity_task']['from_date']
+    to_date_iso = context['activity_task']['to_date']
+    from_date = dt.datetime.strptime(from_date_iso, '%Y-%m-%d').date()
+    to_date = dt.datetime.strptime(to_date_iso, '%Y-%m-%d').date()
 
-    result = startval + random.randint(5, 60)
-    return {'result': result}
+    days = [from_date + dt.timedelta(days=n) for n in range(0, (to_date-from_date).days+1)]
 
+    file_list = ['/path/to/data/{}.json'.format(day) for day in days]
+    return file_list 
 
-@floto.activity(name='demo_step2', version='v2')
-def step2(context):
-    logger.debug('Running add_random_number. Context: ', context)
-    print(context)
-    result = random.randint(0, 10000)
-    return {'result': result}
+@floto.activity(name='fileLength', version='1')
+def file_length(context):
+    files = [v for k,v in context['workflow'].items() if 'copyFiles' in k][0]
+    print('Calculating the length of the files: {}'.format(files))
+    return random.randint(1000, 10000) 
 
-@floto.activity(name='demo_step3', version='v2')
-def step3(context):
-    logger.debug('Running add_random_number. Context: ', context)
-    print(context)
-    result = random.randint(3, 9)
-    return {'result': result}
-
-@floto.activity(name='demo_step4', version='v1')
-def step4(context):
-    logger.debug('Generating spec for child_workflow. Context: ', context)
-
-    results_step2 = [v['result'] for k,v in context.items() if 'demo_step2' in k]
-
-    activity_tasks = [floto.specs.ActivityTask(name='demo_step2', version='v2', 
-        input={'start_val':start_val}) for start_val in results_step2]
-
-    decider_spec = floto.specs.DeciderSpec(activity_tasks=activity_tasks)
-
-    return {'decider_spec':decider_spec.to_json()}
-
-
-worker_1 = floto.ActivityWorker(domain=domain, task_list=activity_task_list)
+worker_1 = floto.ActivityWorker(domain=domain, task_list=activity_task_list, 
+        task_heartbeat_in_seconds=4)
 worker_1.run()

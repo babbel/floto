@@ -33,12 +33,12 @@ class TestDecisionInput:
     def test_get_input_task_activity_task(self, di, task_1, mocker):
         mocker.patch('floto.decider.DecisionInput._get_input')
         di.get_input_task(task_1)
-        di._get_input.assert_called_once_with(task_1, 'activity_task')
+        di._get_input.assert_called_once_with(task_1)
 
     def test_get_input_task_child_workflow(self, di, child_workflow, mocker):
         mocker.patch('floto.decider.DecisionInput._get_input')
         di.get_input_task(child_workflow)
-        di._get_input.assert_called_once_with(child_workflow, 'child_workflow_task')
+        di._get_input.assert_called_once_with(child_workflow)
 
     def test_get_input_task_failed_task(self, di, task_1, mocker):
         mocker.patch('floto.decider.DecisionInput._get_input_scheduled_task')
@@ -59,28 +59,24 @@ class TestDecisionInput:
         mocker.patch('floto.History.get_result_completed_activity', return_value={'foo':'bar'})
         assert di.get_workflow_result()[task_1.id_] == {'foo':'bar'}
 
-    def test_get_input_task_unknow_type(self, di):
-        assert not di.get_input_task('task')
-
     def test_get_input_workflow(self, di, mocker):
         mocker.patch('floto.History.get_workflow_input', return_value='wf_input')
-        di._workflow_input = None
         i = di.get_input_workflow()
         assert i == 'wf_input'
 
     def test_get_input(self, di, task_1):
-        i = di._get_input(task_1, 'activity_task')
+        i = di._get_input(task_1)
         assert i['activity_task'] == {'task_1':'val'}
 
     def test_get_input_task_with_dependencies(self, di, task_1, task_2, mocker):
         mocker.patch('floto.decider.ExecutionGraph.get_dependencies', return_value=[task_2])
         mocker.patch('floto.History.get_result_completed_activity', return_value='result_task_2')
-        i = di._get_input(task_1, 'activity_task')
+        i = di._get_input(task_1)
         assert i['activity_task'] == {'task_1':'val'}
         assert i[task_2.id_] == 'result_task_2'
 
     def test_get_input_w_wf_input(self, di, task_1):
-        i = di._get_input(task_1, 'activity_task')
+        i = di._get_input(task_1)
         assert i['activity_task'] == {'task_1':'val'}
         assert i['workflow'] == 'workflow_input' 
 
@@ -88,7 +84,7 @@ class TestDecisionInput:
         mocker.patch('floto.History.get_result_completed_activity')
         g = floto.specs.task.Generator()
         mocker.patch('floto.decider.ExecutionGraph.get_dependencies', return_value=[g])
-        di._get_input(task_1, '')
+        di._get_input(task_1)
         di.history.get_result_completed_activity.assert_not_called()
 
     def test_get_input_scheduled_task(self, di, mocker):

@@ -1,37 +1,24 @@
 import floto
 
+domain = 'floto_test'
+
 swf = floto.api.Swf()
 
-## Define and register a workflow type.
-workflow_type = floto.api.WorkflowType(domain='floto_test', name='demo_flow', version='v2', 
-        default_task_start_to_close_timeout='7')
-swf.register_workflow_type(workflow_type)
+copy_files = floto.api.ActivityType(name='copyFiles', version='1', domain=domain, 
+        default_task_heartbeat_timeout='10')
 
-child_workflow_type = floto.api.WorkflowType(domain='floto_test', name='demo_flow_child_workflow', 
-        version='v1', default_task_start_to_close_timeout='7')
-swf.register_workflow_type(child_workflow_type)
+file_length = floto.api.ActivityType(name='fileLength', version='1', domain=domain, 
+        default_task_heartbeat_timeout='10')
 
-## Define and register an activity type
-activity_type = floto.api.ActivityType(name='demo_step1', version='v2', domain='floto_test', 
-        default_task_heartbeat_timeout='5')
-swf.register_activity_type(activity_type)
-
-## Define and register an activity type
-activity_type = floto.api.ActivityType(name='demo_step2', version='v2', domain='floto_test', 
-        default_task_heartbeat_timeout='5')
-swf.register_activity_type(activity_type)
-
-## Define and register an activity type
-activity_type = floto.api.ActivityType(name='demo_step3', version='v2', domain='floto_test', 
-        default_task_heartbeat_timeout='5')
-swf.register_activity_type(activity_type)
-
-activity_type = floto.api.ActivityType(name='demo_step4', version='v1', domain='floto_test', 
-        default_task_heartbeat_timeout='5')
-swf.register_activity_type(activity_type)
-
-activity_type = floto.api.ActivityType(name='demo_step5', version='v1', domain='floto_test', 
-        default_task_heartbeat_timeout='5')
-swf.register_activity_type(activity_type)
+swf.register_activity_type(copy_files)
+swf.register_activity_type(file_length)
 
 
+s3_files_workflow_type = floto.api.WorkflowType(domain=domain, name='s3_files_example', version='1',
+        default_task_start_to_close_timeout='20')
+
+s3_read_lengths_workflow_type = floto.api.WorkflowType(domain=domain, name='read_file_lengths', 
+        version='1', default_task_start_to_close_timeout='20')
+
+swf.register_workflow_type(s3_files_workflow_type)
+swf.register_workflow_type(s3_read_lengths_workflow_type)

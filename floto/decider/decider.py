@@ -18,7 +18,7 @@ class Decider(Base):
     """
 
     def __init__(self, decider_spec=None, identity=None):
-        super().__init__()
+        super().__init__(identity=identity)
 
         if isinstance(decider_spec, str):
             self.decider_spec = floto.specs.DeciderSpec.from_json(decider_spec)
@@ -32,13 +32,13 @@ class Decider(Base):
         self.domain = self.decider_spec.domain
 
         self.repeat_workflow = self.decider_spec.repeat_workflow
-        self.activity_task_list = self.decider_spec.activity_task_list or 'floto_activities'
+        self.default_activity_task_list = self.decider_spec.default_activity_task_list
 
         self.decision_builder = None
         if self.decider_spec.activity_tasks:
             activity_tasks = self.decider_spec.activity_tasks
             self.decision_builder = floto.decider.DecisionBuilder(activity_tasks,
-                    self.activity_task_list)
+                    self.default_activity_task_list)
 
     def get_decisions(self):
         """Heart of the decider logics. Called by floto.decider.Base in each 
