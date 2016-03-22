@@ -1,6 +1,7 @@
 import uuid
+import time
 
-from test_helper import get_result
+from test_helper import is_workflow_completed, SlowDecider
 
 import floto
 import floto.api
@@ -19,19 +20,30 @@ def test_17():
                                activity_task_list='floto_activities',
                                terminate_decider_after_completion=True)
 
-    decider = floto.decider.Decider(decider_spec=decider_spec)
+    decider_1 = floto.decider.Decider(decider_spec=decider_spec)
+    decider_2 = SlowDecider(decider_spec=decider_spec, timeout=20, num_timeouts=2)
 
     response = floto.api.Swf().start_workflow_execution(domain='floto_test', 
-                                   workflow_type_name='my_workflow_type',
-                                   workflow_type_version='v1',
+                                   workflow_type_name='decider_timeout_workflow',
+                                   workflow_type_version='v2',
                                    task_list=decider_spec.task_list,
                                    input={'foo':'bar'})
     run_id = response['runId']
-    workflow_id = 'my_workflow_type_v1'
+    workflow_id = 'decider_timeout_workflow_v2'
 
     print(30*'-'+' Running Test 17 '+30*'-')
-    decider.run()
+    decider_1.run(separate_process=True)
+    decider_2.run(separate_process=True)
+
+    result = None
+    while True:
+        time.sleep(5)
+        result = is_workflow_completed(decider_1.domain, response['runId'], workflow_id)
+        if result:
+            decider_1._separate_process.terminate()
+            decider_2._separate_process.terminate()
+            break
     print(30*'-'+' Done Test 17    '+30*'-')
-    return get_result('floto_test', run_id, workflow_id)    
+    return result 
 
 

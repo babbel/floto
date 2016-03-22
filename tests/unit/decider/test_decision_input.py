@@ -22,7 +22,6 @@ def execution_graph(task_1):
 @pytest.fixture
 def di(history, execution_graph):
     di = floto.decider.DecisionInput(execution_graph=execution_graph)
-    di._workflow_input = {'wf':'input'}
     di.history = history 
     return di
 
@@ -69,11 +68,6 @@ class TestDecisionInput:
         i = di.get_input_workflow()
         assert i == 'wf_input'
 
-    def test_store_input_workflow(self, di, mocker):
-        di._workflow_input = 'wf_input_stored'
-        i = di.get_input_workflow()
-        assert i == 'wf_input_stored'
-
     def test_get_input(self, di, task_1):
         i = di._get_input(task_1, 'activity_task')
         assert i['activity_task'] == {'task_1':'val'}
@@ -88,7 +82,7 @@ class TestDecisionInput:
     def test_get_input_w_wf_input(self, di, task_1):
         i = di._get_input(task_1, 'activity_task')
         assert i['activity_task'] == {'task_1':'val'}
-        assert i['workflow'] == {'wf':'input'}
+        assert i['workflow'] == 'workflow_input' 
 
     def test_get_input_wo_generator_result(self, di, mocker, task_1):
         mocker.patch('floto.History.get_result_completed_activity')

@@ -237,7 +237,7 @@ def run_16():
 @docprint
 def run_17():
     """Test 17
-    Activity generates tasks.
+    Activity generates tasks. Tow deciders, one times out.
     """
     result = test_17()
     print_result(result)

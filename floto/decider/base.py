@@ -36,6 +36,7 @@ class Base:
     def complete(self):
         logger.debug('Base.complete...')
         decisions = [d.get_decision() for d in self.decisions]
+        
         try:
             self.swf.client.respond_decision_task_completed(taskToken=self.task_token,
                                                             decisions=decisions)

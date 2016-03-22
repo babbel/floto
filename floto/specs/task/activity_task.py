@@ -5,7 +5,7 @@ from floto.specs.task import Task
 
 class ActivityTask(Task):
     def __init__(self, name=None, version=None, activity_id=None, requires=None, input=None,
-                 retry_strategy=None):
+                 retry_strategy=None, task_list=None):
         """Defines an activity task which is used in decider specs.
 
         Parameters
@@ -26,4 +26,6 @@ class ActivityTask(Task):
         self.input = input
         self.id_ = activity_id or self._default_id(name, version, input)
         self.retry_strategy = retry_strategy
+        # TODO test
+        self.task_list = task_list
 

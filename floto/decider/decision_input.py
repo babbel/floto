@@ -4,7 +4,6 @@ import json
 class DecisionInput:
     def __init__(self, execution_graph=None):
         self.history = None
-        self._workflow_input = None
         self._execution_graph = execution_graph
 
     def get_input_task(self, task, is_failed_task=False):
@@ -23,9 +22,7 @@ class DecisionInput:
             return None
 
     def get_input_workflow(self):
-        if not self._workflow_input:
-            self._workflow_input = self.history.get_workflow_input()
-        return self._workflow_input
+        return self.history.get_workflow_input()
 
     def get_details_failed_tasks(self, failed_tasks_events):
         details = {}

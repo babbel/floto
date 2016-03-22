@@ -28,6 +28,8 @@ class History:
         self.set_response_properties(response)
         self.dt_previous_decision_task = None
         self._read_events_up_to_last_decision(response)
+        self.response = response
+
 
     def set_response_properties(self, response):
         self.next_page_token = response['nextPageToken'] if ('nextPageToken' in response) else None
@@ -286,7 +288,6 @@ class History:
             return self.get_result_completed_activity(task)
         return None
 
-    # TODO: Adapt for StartAsNewWorkflow event
     def is_first_decision_task(self):
         """Returns true if this is the first decision task of the workflow"""
         if self.previous_decision_id == 0:

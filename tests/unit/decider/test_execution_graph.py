@@ -11,6 +11,10 @@ def task_2():
     return ActivityTask(activity_id='t2:1', name='t2', version='1')
 
 @pytest.fixture
+def generator_task():
+    return Generator(name='g', version='v1')
+
+@pytest.fixture
 def graph(task_1, task_2):
     return floto.decider.ExecutionGraph(activity_tasks=[task_1, task_2])
 
@@ -140,6 +144,13 @@ class TestExecutionGraph():
         assert get_task_requires(t5, graph.tasks) == set(['g:1'])
         assert not get_task_requires(t6, graph.tasks)
         
+    def test_has_generator_task(self, graph, task_1, generator_task):
+        graph.tasks = [task_1, generator_task]
+        assert graph.has_generator_task()
+
+    def test_has_no_generator_task(self, graph, task_1):
+        graph.tasks = [task_1]
+        assert not graph.has_generator_task()
 
     def test_remove_dependency(self, graph, task_1, task_2):
         assert graph._remove_dependency([task_1, task_2], task_2) == [task_1]

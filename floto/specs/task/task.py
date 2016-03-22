@@ -17,5 +17,11 @@ class Task(object):
 
         """
         input_string = json.dumps(input, sort_keys=True)
-        input_hash = hashlib.sha1(input_string.encode()).hexdigest()[:15]
-        return '{}:{}:{}'.format(name, version, input_hash)
+
+        if self.requires:
+            requires_string = ''.join([t.id_ for t in self.requires])
+        else:
+            requires_string = ''
+
+        hash_ = hashlib.sha1((input_string+requires_string).encode()).hexdigest()[:10]
+        return '{}:{}:{}'.format(name, version, hash_)
