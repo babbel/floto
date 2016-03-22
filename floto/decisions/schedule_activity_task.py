@@ -1,7 +1,9 @@
 import json
+import logging
 
 from floto.decisions import Decision
 
+logger = logging.getLogger(__name__)
 
 class ScheduleActivityTask(Decision):
     def __init__(self, **args):
@@ -21,6 +23,7 @@ class ScheduleActivityTask(Decision):
         return d
 
     def decision_attributes(self):
+        logger.debug('ScheduleActivityTask.decision_attributes...')
         if not self.activity_type:
             raise ValueError('No activity type')
 

@@ -1,8 +1,21 @@
 import json
 import time
+from functools import wraps
 
 import floto
 from floto.decider import Decider
+
+
+def docprint(func):
+    """Decorator that prints the docstring of the decorated function before executing it
+
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        print(func.__doc__)
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def get_result(domain, run_id, workflow_id):

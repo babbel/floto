@@ -24,9 +24,6 @@ class ActivityTask(Task):
         self.name = name
         self.version = version
         self.input = input
-        self.id_ = activity_id or self._default_activity_id()
+        self.id_ = activity_id or self._default_id(name, version, input)
         self.retry_strategy = retry_strategy
 
-    def _default_activity_id(self):
-        input_hash = hash(json.dumps(self.input, sort_keys=True))
-        return '{}:{}:{}'.format(self.name, self.version, input_hash)

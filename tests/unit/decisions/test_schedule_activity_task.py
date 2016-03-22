@@ -24,22 +24,6 @@ class TestScheduleActivityTask():
         activity_id = activity_type.name + '_' + activity_type.version
         assert d.decision_attributes()['activityId'] == activity_id 
 
-    def test_path_in_dictionary(self):
-        dictionary = {'key':'value'}
-        d = ScheduleActivityTask()
-        assert d.path_in_dictionary(dictionary, 'key')
-        assert not d.path_in_dictionary(dictionary, 'key2')
-
-    def test_path_in_dictionary_several_keys(self):
-        dictionary = {'key':{'key2':'val'}}
-        d = ScheduleActivityTask()
-        assert d.path_in_dictionary(dictionary, 'key.key2')
-
-    def test_path_in_dictionary_several_keys(self):
-        dictionary = {'key':{'key2':'val'}}
-        d = ScheduleActivityTask()
-        assert d.path_in_dictionary(dictionary, 'key.key2')
-
     def test_assert_required_fields_raises(self):
         dictionary = {'key':'val'}
         d = ScheduleActivityTask()

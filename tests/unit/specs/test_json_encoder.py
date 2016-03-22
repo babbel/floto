@@ -61,6 +61,19 @@ class TestJSONEncoder(object):
         assert json_spec['type'] == 'floto.specs.Timer'
         assert json_spec['id_'] == 'my_timer'
 
+    def test_child_workflow_dump(self):
+        cw = floto.specs.ChildWorkflow(workflow_id='wid')
+        j = json.dumps(cw, cls=floto.specs.JSONEncoder)
+        json_spec = json.loads(j)
+        assert json_spec['type'] == 'floto.specs.ChildWorkflow'
+        assert json_spec['id_'] == 'wid'
+
+    def test_child_workflow_loads(self):
+        j = {'type':'floto.specs.ChildWorkflow', 'id_':'wid'}
+        cw = json.loads(json.dumps(j), object_hook=floto.specs.JSONEncoder.object_hook) 
+        assert isinstance(cw, floto.specs.ChildWorkflow)
+        assert cw.id_ == 'wid'
+
     def test_workflow_spec(self):
         tasks = [floto.specs.ActivityTask(name='n')]
         spec = floto.specs.DeciderSpec(activity_tasks=tasks)

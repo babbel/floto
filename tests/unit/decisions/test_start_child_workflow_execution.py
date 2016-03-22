@@ -20,7 +20,7 @@ class TestStartChildWorkflowExecution():
         
     def test_init_input(self):
         w = floto.decisions.StartChildWorkflowExecution(input={'foo':'bar'}) 
-        assert w.get_attributes()['input'] == {'foo':'bar'} 
+        assert json.loads(w.get_attributes()['input']) == {'foo':'bar'} 
 
     def test_property_workflow_id(self):
         w = floto.decisions.StartChildWorkflowExecution() 
@@ -36,23 +36,5 @@ class TestStartChildWorkflowExecution():
         w = floto.decisions.StartChildWorkflowExecution() 
         w.workflow_type = floto.api.WorkflowType(name='n', version='v') 
         assert w.workflow_type == {'name':'n', 'version':'v'} 
-
-    #def test_from_json(self):
-        #j = '{"workflow_id": "my_child_workflow"}'
-        #w = floto.decisions.StartChildWorkflowExecution() 
-        #w.from_json(j)
-        #assert w.workflow_id == 'my_child_workflow'
-
-    #def test_json_serializablity(self):
-        #j = """{"startChildWorkflowExecutionDecisionAttributes":{
-                  #"workflowId":"my_id", 
-                  #"workflowType":{"name":"wft_name", "version":"wft_version"}}}"""
-        #w = floto.decisions.StartChildWorkflowExecution()
-        #w.from_json(j)
-        #d = w.get_decision()
-        #attributes = d['startChildWorkflowExecutionDecisionAttributes']
-        #assert d['decisionType'] == 'StartChildWorkflowExecution'
-        #assert attributes['workflowId'] == 'my_id' 
-        #assert attributes['workflowType']['name'] == 'wft_name' 
 
 

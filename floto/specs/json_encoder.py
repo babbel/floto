@@ -13,7 +13,8 @@ class JSONEncoder(json.JSONEncoder):
         if isinstance(obj, (floto.specs.ActivityTask,
                             floto.specs.DeciderSpec,
                             floto.specs.retry_strategy.Strategy,
-                            floto.specs.Timer)):
+                            floto.specs.Timer,
+                            floto.specs.ChildWorkflow)):
             return self.default_from_namespace(obj)
 
         if isinstance(obj, (dt.datetime,

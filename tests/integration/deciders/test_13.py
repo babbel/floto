@@ -30,7 +30,7 @@ def test_13():
                                task_list=str(uuid.uuid4()),
                                activity_tasks=tasks,
                                activity_task_list='floto_activities',
-                               repeat_workflow=False)
+                               terminate_decider_after_completion=True)
 
     decider_1 = floto.decider.Decider(decider_spec=decider_spec)
     decider_2 = SlowDecider(decider_spec=decider_spec)

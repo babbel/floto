@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 class ExecutionGraph:
     def __init__(self, activity_tasks=None):
         self.tasks = activity_tasks
