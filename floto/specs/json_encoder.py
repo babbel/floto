@@ -34,7 +34,6 @@ class JSONEncoder(json.JSONEncoder):
         d['type'] = module_name + '.' + obj.__class__.__name__
         return d
 
-    # TODO test
     def namespace_remove_unnecessary_fields(self, obj):
         d = self.default_from_namespace(obj)
         if 'requires' in d:

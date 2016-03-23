@@ -27,9 +27,7 @@ class TestJSONEncoder(object):
         t1 = floto.specs.task.ActivityTask(name='t1')
         t2 = floto.specs.task.ActivityTask(name='t2', requires=[t1])
         result = json.loads(json.dumps(t2, cls=floto.specs.JSONEncoder))
-        print(result['requires'])
         assert not 'name' in result['requires'][0]
-        assert False
 
     def test_default_encoder(self):
         obj = {'foo':'bar'}
