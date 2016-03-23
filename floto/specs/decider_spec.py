@@ -31,7 +31,7 @@ class DeciderSpec:
         self.terminate_decider_after_completion = terminate_decider_after_completion
 
     def to_json(self):
-        return json.dumps(self, cls=floto.specs.JSONEncoder, sort_keys=True)
+        return json.dumps(self, cls=floto.specs.JSONEncoder, sort_keys=True, indent=4)
 
     @staticmethod
     def from_json(json_str):

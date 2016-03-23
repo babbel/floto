@@ -13,7 +13,7 @@ class ActivityTask(Task):
         name: str [Required]
         version: str [Required]
         activity_id: str
-            The id of the activity task. Defaults to: <name>:<version>:hash(input)
+            The id of the activity task. Defaults to: <name>:<version>:hash(input/requires)
         requires: list
             List of activity tasks this activity task depends on
         input: dict

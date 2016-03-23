@@ -11,6 +11,8 @@ import json
 
 class DecisionBuilder:
     def __init__(self, activity_tasks, default_activity_task_list):
+        if not activity_tasks:
+            raise ValueError("no activity tasks!")
         self.workflow_fail = False
         self.workflow_complete = False
         self.initial_activity_tasks = activity_tasks

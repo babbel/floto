@@ -27,7 +27,9 @@ class TestJSONEncoder(object):
         t1 = floto.specs.task.ActivityTask(name='t1')
         t2 = floto.specs.task.ActivityTask(name='t2', requires=[t1])
         result = json.loads(json.dumps(t2, cls=floto.specs.JSONEncoder))
-        assert result['requires'][0]['name'] == 't1' 
+        print(result['requires'])
+        assert not 'name' in result['requires'][0]
+        assert False
 
     def test_default_encoder(self):
         obj = {'foo':'bar'}
@@ -55,7 +57,8 @@ class TestJSONEncoder(object):
         assert s.is_task_resubmitted(failures=3)
 
     def test_timer_dump(self):
-        t = floto.specs.task.Timer(id_='my_timer', requires=['t'])
+        required_task = floto.specs.task.ActivityTask(name='t1')
+        t = floto.specs.task.Timer(id_='my_timer', requires=[required_task])
         j = json.dumps(t, cls=floto.specs.JSONEncoder)
         json_spec = json.loads(j)
         assert json_spec['type'] == 'floto.specs.task.Timer'

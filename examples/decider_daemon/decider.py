@@ -1,6 +1,7 @@
 import floto
 import logging
-from floto.specs import ActivityTask, DeciderSpec, ChildWorkflow
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask
 import floto.decider
 
 logger = logging.getLogger(__name__)
@@ -19,8 +20,8 @@ a4 = ActivityTask(name='demo_step4', version='v1', requires=[a2, a2a], retry_str
 decider_spec = DeciderSpec(domain='floto_test',
                            task_list='demo_step_decisions',
                            activity_tasks=[a1,a2,a2a,a4],
-                           activity_task_list='demo_step_activities',
-                           terminate_decider_after_completion=False)
+                           default_activity_task_list='demo_step_activities',
+                           terminate_decider_after_completion=True)
 
 decider = floto.decider.Decider(decider_spec=decider_spec)
 

@@ -46,11 +46,11 @@ def step4(context):
 
     results_step2 = [v['result'] for k,v in context.items() if 'demo_step2' in k]
 
-    activity_tasks = [floto.specs.ActivityTask(name='demo_step2', version='v2', 
+    activity_tasks = [floto.specs.task.ActivityTask(name='demo_step2', version='v2', 
         input={'start_val':start_val}) for start_val in results_step2]
 
     decider_spec = floto.specs.DeciderSpec(domain='floto_test',
-             activity_task_list=activity_task_list,
+             default_activity_task_list=activity_task_list,
              activity_tasks=activity_tasks)
 
     floto.api.Swf().signal_workflow_execution(domain='floto_test', 

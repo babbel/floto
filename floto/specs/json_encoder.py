@@ -2,6 +2,7 @@ import collections
 import datetime as dt
 import json
 import sys
+import copy
 
 import floto
 import floto.specs
@@ -12,12 +13,14 @@ import floto.specs.retry_strategy
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (floto.specs.DeciderSpec,
-                            floto.specs.retry_strategy.Strategy,
-                            floto.specs.task.ActivityTask,
-                            floto.specs.task.Timer,
-                            floto.specs.task.ChildWorkflow,
-                            floto.specs.task.Generator)):
+                            floto.specs.retry_strategy.Strategy)):
             return self.default_from_namespace(obj)
+
+        if isinstance(obj,(floto.specs.task.ActivityTask,
+                           floto.specs.task.Timer,
+                           floto.specs.task.ChildWorkflow,
+                           floto.specs.task.Generator)):
+            return self.namespace_remove_unnecessary_fields(obj)
 
         if isinstance(obj, (dt.datetime,
                             dt.date,
@@ -29,6 +32,14 @@ class JSONEncoder(json.JSONEncoder):
         d = self.filter_none(obj.__dict__)
         module_name = '.'.join(obj.__module__.split('.')[:-1])
         d['type'] = module_name + '.' + obj.__class__.__name__
+        return d
+
+    # TODO test
+    def namespace_remove_unnecessary_fields(self, obj):
+        d = self.default_from_namespace(obj)
+        if 'requires' in d:
+            for r in d['requires']:
+                r.__dict__ = {'id_':r.id_}
         return d
 
     @staticmethod
