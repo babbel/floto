@@ -299,7 +299,7 @@ class TestHistory():
 
     def test_task_complete_with_timer(self, mocker, history):
         mocker.patch('floto.History.is_timer_task_completed', return_value=True)
-        timer = floto.specs.task.Timer()
+        timer = floto.specs.task.Timer(id_='t1')
         assert history.is_task_completed(timer)
 
     def test_task_complete_with_child_workflow(self, mocker, history):
