@@ -39,7 +39,7 @@ class Daemon(Base):
         return decision
 
     def get_decision_start_child_workflow_execution(self):
-        child_workflow_type = floto.api.WorkflowType(name='child_workflow', version='v1')
+        child_workflow_type = floto.api.WorkflowType(domain='d', name='child_workflow', version='v1')
         child_workflow_id = str(uuid.uuid4())
         child_workflow_task_list = 'task_list_{}'.format(child_workflow_id)
 

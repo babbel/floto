@@ -72,7 +72,7 @@ class Swf(object):
         self.register_type(swf_type)
 
     def register_type(self, swf_type):
-        p = swf_type._get_properties()
+        p = swf_type.swf_attributes
         try:
             if isinstance(swf_type, floto.api.ActivityType):
                 self.client.register_activity_type(**p)
@@ -85,32 +85,31 @@ class Swf(object):
             else:
                 logger.error(e)
 
-    def start_workflow_execution(self, domain=None, workflow_id=None, workflow_type_name=None,
-                                 workflow_type_version=None, task_list=None, input=None):
+    def start_workflow_execution(self, *, domain, workflow_type_name, workflow_type_version,
+                                 workflow_id=None, task_list=None, input=None,
+                                 decision_task_start_to_close_timeout=None):
         """Start the workflow execution
 
         Parameters
         ----------
         domain: str
-            [Required] The swf domain
-        workflow_id: str
-            The workflow id. Defaults to: <workflow_type_name>_<workflow_type_version>
+            The swf domain
         workflow_type_name: str
-            [Required] Name of the registered workflow type
+            Name of the registered workflow type
         workflow_type_version: str
-            [Required] Version of the registered workflow type
-        task_list: str
+            Version of the registered workflow type
+        workflow_id: Optional[str]
+            The workflow id. Defaults to: <workflow_type_name>_<workflow_type_version>
+        task_list: Optional[str]
             Name of the task list. If not given, the default task list specified in the workflow
             type is used.
-        input: object
+        input: Optional[object]
            Optional input, will be converted to json
+        decision_task_start_to_close_timeout : Optional[str, int]
+            The maximum duration of decision tasks for this workflow execution, in seconds.
+            This parameter overrides the defaultTaskStartToCloseTimeout specified when registering
+            the workflow type using RegisterWorkflowType .
         """
-        if not domain:
-            raise ValueError('Cannot start workflow without domain')
-        if not workflow_type_name:
-            raise ValueError('Cannot start workflow without workflow_type_name')
-        if not workflow_type_version:
-            raise ValueError('Cannot start workflow without workflow_type_version')
 
         workflow_id = workflow_id or (workflow_type_name + '_' + workflow_type_version)
         args = {'domain': domain,
@@ -121,6 +120,10 @@ class Swf(object):
 
         if input:
             args['input'] = floto.specs.JSONEncoder.dump_object(input)
+
+        if decision_task_start_to_close_timeout:
+            args['taskStartToCloseTimeout'] = str(decision_task_start_to_close_timeout)
+
         return self.client.start_workflow_execution(**args)
 
     def signal_workflow_execution(self, domain, workflow_id, signal_name, input=None, run_id=None):

@@ -12,8 +12,8 @@ class DynamicDecider(Decider):
         input_ = self.history.get_workflow_input()
         activity_tasks = self.get_activity_tasks_from_input(input_)
 
-        self.decision_builder = floto.decider.DecisionBuilder(activity_tasks,
-                self.default_activity_task_list)
+        self.decision_builder = floto.decider.DecisionBuilder(activity_tasks=activity_tasks,
+                default_activity_task_list=self.default_activity_task_list)
 
         self.decisions = self.decision_builder.get_decisions(self.history)
         self.terminate_workflow = self.decision_builder.is_terminate_workflow()
@@ -24,11 +24,9 @@ class DynamicDecider(Decider):
                 tasks = None
                 if k == 'activity_tasks':
                     tasks_json = json.dumps(v)
-                    tasks = json.loads(tasks_json, object_hook=floto.specs.JSONEncoder.object_hook)
+                    tasks = json.loads(tasks_json, object_hook=floto.specs.JSONEncoder.floto_object_hook)
                 else:
                     tasks = self.get_activity_tasks_from_input(v)
                 if tasks: 
                     return tasks
         return None 
-
-

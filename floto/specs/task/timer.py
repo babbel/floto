@@ -16,3 +16,9 @@ class Timer(Task):
         """
         super().__init__(id_=id_, requires=requires)
         self.delay_in_seconds = delay_in_seconds
+
+    @classmethod
+    def deserialized(cls, **kwargs):
+        """Construct an instance from a dict of attributes
+        """
+        return cls(**kwargs)
