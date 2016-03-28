@@ -7,8 +7,18 @@ logger = logging.getLogger(__name__)
 
 
 class Task:
-    """Base class for tasks, e.g. ActivityTask, Timer."""
+    """Base class for tasks, e.g. ActivityTask, Timer.
 
+    Parameters
+    ----------
+    id_: str
+        The unique id of the timer task
+    requires: Optional[list[<floto.specs.task>]]
+        List of other tasks on which this timer depends on when the workflow is executed
+
+    """
+
+    # TODO `requires` can be anything here, make sure it's a list of tasks
     def __init__(self, id_=None, requires=None):
         self.id_ = id_
         self.requires = requires
@@ -46,7 +56,7 @@ class Task:
         cpy['type'] = module_name + '.' + self.__class__.__name__
 
         # in the requires list, we need nothing but the task's id_
-        requires = cpy.get('requires', [])
+        requires = cpy.get('requires')
         if requires:
             cpy['requires'] = [{'id_': t.id_} for t in requires]
         logger.debug('serialized {}'.format(cpy))

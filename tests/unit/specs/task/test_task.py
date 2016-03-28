@@ -5,7 +5,7 @@ import floto.specs.task
 def task():
     return floto.specs.task.Task()
 
-class TestTask(object):
+class TestTask:
     def test_init(self):
         task = floto.specs.task.Task(id_='id', requires='r')
         assert task.id_ == 'id'

@@ -27,6 +27,7 @@ class DecisionBuilder:
         self._decompress_generator_result = False
 
     def get_decisions(self, history):
+        logger.debug('get_decisons...')
         self._execution_graph = None
         self._set_history(history)
 

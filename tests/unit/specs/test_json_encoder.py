@@ -15,7 +15,7 @@ def activity_task_json():
          'domain': 'd'}
     return json.dumps(t)
 
-class TestJSONEncoder(object):
+class TestJSONEncoder:
     def test_dictionary(self):
         obj = {'foo':'bar'}
         assert json.dumps(obj, cls=floto.specs.JSONEncoder) == json.dumps(obj)
