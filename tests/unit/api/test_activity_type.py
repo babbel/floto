@@ -10,16 +10,19 @@ class Client_Mock:
 
 class TestActivityTypeAPICall:
 
-    def test_get_properties(self):
-        a = ActivityType()
-        p = a._get_properties()
-        assert 'defaultTaskScheduleToCloseTimeout' in p
+    def test_swf_attributes(self):
+        a = ActivityType(domain='d', name='n', version='v')
+        p = a.swf_attributes
+        assert 'defaultTaskStartToCloseTimeout' in p
+        assert p['defaultTaskList'] == {'name': 'default'}
+        assert p['defaultTaskStartToCloseTimeout'] == '21600'
 
     def test_set_args(self):
-        a = ActivityType(default_task_heartbeat_timeout='120', 
-                default_task_schedule_to_start_timeout='180')
-        p = a._get_properties()
+        a = ActivityType(domain='d', name='n', version='v', default_task_heartbeat_timeout='120',
+                default_task_schedule_to_start_timeout='180', default_task_list='tl')
+        p = a.swf_attributes
         assert p['defaultTaskHeartbeatTimeout'] == '120'
         assert p['defaultTaskScheduleToStartTimeout'] == '180'
+        assert p['defaultTaskList'] == {'name': 'tl'}
 
 

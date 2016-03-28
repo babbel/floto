@@ -63,8 +63,11 @@ class TestSwf(object):
         client_mock = type("ClientMock", (object,), {"register_activity_type":Mock()})
         mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=client_mock())
 
-        activity_type = floto.api.ActivityType()
-        properties = activity_type._get_properties()
+        args = {'domain': 'test_domain',
+                'name': 'my_workflow_type',
+                'version': 'v1'}
+        activity_type = floto.api.ActivityType(**args)
+        properties = activity_type.swf_attributes
 
         swf = floto.api.Swf()
         swf.register_activity_type(activity_type)
@@ -74,11 +77,14 @@ class TestSwf(object):
         client_mock = type("ClientMock", (object,), {"register_workflow_type":Mock()})
         mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=client_mock())
 
-        w = floto.api.WorkflowType()
-        args = w._get_properties()
+        args = {'domain': 'test_domain',
+                'name': 'my_workflow_type',
+                'version': 'v1'}
+        w = floto.api.WorkflowType(**args)
+        properties = w.swf_attributes
         swf = floto.api.Swf()
         swf.register_workflow_type(w)
-        swf.client.register_workflow_type.assert_called_once_with(**args)
+        swf.client.register_workflow_type.assert_called_once_with(**properties)
 
     def test_register_type_does_not_raise(self, mocker):
         error_response = {'Error':{'Code':'TypeAlreadyExistsFault'}}
@@ -90,10 +96,13 @@ class TestSwf(object):
         mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=client_mock())
 
         swf = floto.api.Swf()
-
-        workflow_type = floto.api.WorkflowType()
+        args = {'domain': 'test_domain',
+                'name': 'my_workflow_type',
+                'version': 'v1'}
+        workflow_type = floto.api.WorkflowType(**args)
+        properties = workflow_type.swf_attributes
         swf.register_type(workflow_type)
-        swf.client.register_workflow_type.assert_called_once_with(**workflow_type._get_properties())
+        swf.client.register_workflow_type.assert_called_once_with(**properties)
 
 
     def test_start_workflow_execution(self, mocker):
@@ -170,7 +179,7 @@ class TestSwf(object):
         ({'domain':'domain', 'workflow_type_name':'name'})])
     def test_start_workflow_raises(self, args):
         swf = floto.api.Swf()
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             swf.start_workflow_execution(**args)
 
     def test_describe_workflow_execution(self, mocker):

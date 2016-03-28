@@ -8,7 +8,7 @@ import floto.api
 @pytest.fixture
 def activity_task():
     return {'activityId': 'my_activity_id',
-            'activityType': {'name': 'my_activity_type', 'version': 'v1'},
+            'activityType': {'name': 'my_activity_type', 'version': 'v1', 'domain': 'd'},
             'startedEventId': 7,
             'taskToken': 'the_task_token',
             'workflowExecution': {'runId': 'the_run_id', 'workflowId': 'the_workflow_id'}}
@@ -19,28 +19,28 @@ def worker(mocker):
                         'respond_activity_task_failed':Mock()}
     client_mock = type("ClientMock", (object,), mocked_functions)
     mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=client_mock())
-    worker = floto.ActivityWorker()
+    worker = floto.ActivityWorker(domain='d', task_list='tl')
     worker.result = 'result'
     worker.task_token = 'tt'
     return worker
 
 class TestActivityWorker:
     def test_init(self):
-        worker = floto.ActivityWorker(task_heartbeat_in_seconds=10)
+        worker = floto.ActivityWorker(domain='d', task_list='tl', task_heartbeat_in_seconds=10)
         assert worker.task_heartbeat_in_seconds == 10
 
     def test_init_with_defaults(self):
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         assert worker.task_heartbeat_in_seconds == 90
 
     def test_terminate_activity_worker(self):
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.terminate_worker()
         assert worker._terminate_activity_worker == True
 
     def test_start_heartbeat(self, mocker):
         mocker.patch('floto.HeartbeatSender.send_heartbeats')
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.task_heartbeat_in_seconds = 1
         worker.task_token = 't'
         worker.start_heartbeat()
@@ -48,22 +48,22 @@ class TestActivityWorker:
 
     def test_stop_heartbeat(self, mocker):
         mocker.patch('floto.HeartbeatSender.stop_heartbeats')
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.stop_heartbeat()
         worker.heartbeat_sender.stop_heartbeats.assert_called_once_with()
 
 
-@floto.activity(name='my_activity_type', version='v1')
+@floto.activity(domain='d', name='my_activity_type', version='v1')
 def do_work():
     return 'success'
 
 
-@floto.activity(name='my_activity_type', version='v2')
+@floto.activity(domain='d', name='my_activity_type', version='v2')
 def do_work_and_return_context(context):
     return context
 
 
-@floto.activity(name='activity_fails', version='v1')
+@floto.activity(domain='d', name='activity_fails', version='v1')
 def fail():
     raise ValueError('Activity failed')
 
@@ -75,16 +75,13 @@ class MockedActivityWorker(floto.ActivityWorker):
 
 class TestActivityWorkerAPICalls:
     def test_args(self):
-        sig = signature(floto.ACTIVITY_FUNCTIONS['my_activity_type:v2'])
+        sig = signature(floto.ACTIVITY_FUNCTIONS['my_activity_type:v2:d'])
         assert ('context' in sig.parameters)
 
     def test_poll(self, mocker, activity_task):
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=activity_task)
 
-        worker = floto.ActivityWorker()
-        worker.domain = 'd'
-        worker.task_list = 'task_list'
-        worker.identity = 'test machine'
+        worker = floto.ActivityWorker(domain='d', task_list='task_list', identity='test machine')
 
         worker.poll()
         worker.swf.poll_for_activity_task.assert_called_once_with(task_list='task_list', domain='d',
@@ -97,7 +94,7 @@ class TestActivityWorkerAPICalls:
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=activity_task)
         mocker.patch('floto.ActivityWorker.complete')
 
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.max_polls = 1
         worker.run()
 
@@ -111,7 +108,7 @@ class TestActivityWorkerAPICalls:
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=activity_task_with_input)
         mocker.patch('floto.ActivityWorker.complete')
 
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.max_polls = 1
         worker.run()
         assert worker.result == {'foo': 'bar'}
@@ -123,7 +120,7 @@ class TestActivityWorkerAPICalls:
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=activity_task_with_input)
         mocker.patch('floto.ActivityWorker.complete')
 
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.max_polls = 1
         worker.run()
         assert worker.result == {}
@@ -132,7 +129,7 @@ class TestActivityWorkerAPICalls:
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value={})
         mocker.patch('floto.ActivityWorker.complete')
 
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.max_polls = 1
         worker.run()
 
@@ -144,7 +141,7 @@ class TestActivityWorkerAPICalls:
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=failing_task)
         mocker.patch('floto.ActivityWorker.complete')
 
-        worker = MockedActivityWorker()
+        worker = MockedActivityWorker(domain='d', task_list='tl')
         worker.max_polls = 1
         worker.run()
         assert str(worker._error) == 'Activity failed'
@@ -155,24 +152,24 @@ class TestActivityWorkerAPICalls:
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=failing_task)
         mocker.patch('floto.ActivityWorker.complete')
 
-        worker = MockedActivityWorker()
+        worker = MockedActivityWorker(domain='d', task_list='tl')
         worker.max_polls = 1
         worker.run()
-        message = 'No activity with id activity_unknown:v1 registered'
+        message = 'No activity with id activity_unknown:v1:d registered'
         assert str(worker._error) == message
 
     def test_task_failed(self, mocker):
         client_mock = type('ClientMock', (object,), {'respond_activity_task_failed': Mock()})
         mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=client_mock())
 
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.task_token = 'abc'
         worker.task_failed(Exception('some error'))
         expected_args = {'taskToken': 'abc', 'details': 'some error'}
         worker.swf.client.respond_activity_task_failed.assert_called_once_with(**expected_args)
 
     def test_terminate_worker(self):
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.terminate_worker()
         assert worker.get_terminate_activity_worker()
 
@@ -193,7 +190,7 @@ class TestActivityWorkerAPICalls:
         mocker.patch('floto.ActivityWorker.start_heartbeat')
         mocker.patch('floto.ActivityWorker.stop_heartbeat')
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=activity_task)
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.max_polls = 1
         worker.run()
         worker.start_heartbeat.assert_called_once_with()
@@ -206,7 +203,7 @@ class TestActivityWorkerAPICalls:
         mocker.patch('floto.ActivityWorker.start_heartbeat')
         mocker.patch('floto.ActivityWorker.stop_heartbeat')
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=failing_task)
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.max_polls = 1
         worker.run()
         worker.start_heartbeat.assert_called_once_with()
@@ -219,14 +216,13 @@ class TestActivityWorkerAPICalls:
         mocker.patch('floto.ActivityWorker.start_heartbeat')
         mocker.patch('floto.ActivityWorker.stop_heartbeat')
         mocker.patch('floto.api.Swf.poll_for_activity_task', return_value=failing_task)
-        worker = floto.ActivityWorker()
+        worker = floto.ActivityWorker(domain='d', task_list='tl')
         worker.max_polls = 1
         worker.run()
         worker.start_heartbeat.assert_not_called()
 
     def test_start_heartbeat_deactivation(self):
-        worker = floto.ActivityWorker(task_heartbeat_in_seconds=0)
+        worker = floto.ActivityWorker(domain='d', task_list='tl', task_heartbeat_in_seconds=0)
         worker.heartbeat_sender.send_heartbeats = Mock()
         worker.start_heartbeat()
         assert not worker.heartbeat_sender.send_heartbeats.called
-

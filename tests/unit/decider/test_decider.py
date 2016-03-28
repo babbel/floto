@@ -7,11 +7,11 @@ from unittest.mock import Mock
 
 @pytest.fixture
 def task_1():
-    return ActivityTask(name='activity1', version='v1', input={'date':1})
+    return ActivityTask(domain='d', name='activity1', version='v1', input={'date':1})
 
 @pytest.fixture
 def task_2(task_1):
-    return ActivityTask(name='activity2', version='v1', requires=[task_1]) 
+    return ActivityTask(domain='d', name='activity2', version='v1', requires=[task_1])
 
 @pytest.fixture
 def decider_spec(task_1, task_2):

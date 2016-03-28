@@ -1,4 +1,3 @@
-import pytest
 import floto.specs.task
 
 class TestGenerator:
@@ -6,6 +5,7 @@ class TestGenerator:
         mocker.patch('floto.specs.task.ActivityTask.__init__')
         args = {'name':'n',
                 'version':'v',
+                'domain': 'd',
                 'activity_id':'aid',
                 'requires':['a'],
                 'input':{'foo':'bar'},
