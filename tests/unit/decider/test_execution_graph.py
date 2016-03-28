@@ -1,13 +1,26 @@
 import pytest
 import floto.decider
-from floto.specs import ActivityTask, Timer
+from floto.specs.task import ActivityTask, Timer, Generator
+
+@pytest.fixture
+def task_1():
+    return ActivityTask(activity_id='t1:1', name='t1', version='1')
+
+@pytest.fixture
+def task_2():
+    return ActivityTask(activity_id='t2:1', name='t2', version='1')
+
+@pytest.fixture
+def generator_task():
+    return Generator(name='g', version='v1')
+
+@pytest.fixture
+def graph(task_1, task_2):
+    return floto.decider.ExecutionGraph(activity_tasks=[task_1, task_2])
 
 class TestExecutionGraph():
-    def test_size_matrix_graph_from_task_spec(self):
-        tasks = [ActivityTask(activity_id='t1:1', name='t1', version='1'),
-                 ActivityTask(activity_id='t2:1', name='t2', version='1')]
-        g = floto.decider.ExecutionGraph(activity_tasks=tasks)
-        matrix = g.graph_from_task_specs()
+    def test_size_matrix_graph_from_task_spec(self, graph):
+        matrix = graph.graph_from_task_specs()
         assert len(matrix) == 2
         assert len(matrix[0]) == 2
         assert matrix[0][0] == 0
@@ -107,5 +120,45 @@ class TestExecutionGraph():
         outgoing = g.outgoing_vertices()
         assert len(outgoing) == 2
         assert set([e.id_ for e in outgoing]) == set(['t3:1', 't4:1'])
+
+    def test_update(self):
+        def get_task_requires(task, tasks):
+            f = [t for t in tasks if t.id_==task.id_][0]
+            return set([t.id_ for t in f.requires]) if f.requires else None
+        
+        t1 = ActivityTask(activity_id='t1:1', name='t1', version='1')
+        g = Generator(activity_id='g:1', name='g', version='1', requires=[t1])
+        t3 = ActivityTask(activity_id='t3:1', name='t3', version='1', requires=[g])
+
+        t4 = ActivityTask(activity_id='t4:1', name='t4', version='1')
+        t5 = ActivityTask(activity_id='t5:1', name='t5', version='1')
+
+        t6 = ActivityTask(activity_id='t6:1', name='t6', version='1')
+
+        graph = floto.decider.ExecutionGraph(activity_tasks=[t1,g,t3,t6])
+        graph.update(g, [t4, t5])
+
+        assert get_task_requires(g, graph.tasks) == set(['t1:1'])
+        assert get_task_requires(t3, graph.tasks) == set(['t4:1', 't5:1'])
+        assert get_task_requires(t4, graph.tasks) == set(['g:1'])
+        assert get_task_requires(t5, graph.tasks) == set(['g:1'])
+        assert not get_task_requires(t6, graph.tasks)
+        
+    def test_has_generator_task(self, graph, task_1, generator_task):
+        graph.tasks = [task_1, generator_task]
+        assert graph.has_generator_task()
+
+    def test_has_no_generator_task(self, graph, task_1):
+        graph.tasks = [task_1]
+        assert not graph.has_generator_task()
+
+    def test_remove_dependency(self, graph, task_1, task_2):
+        assert graph._remove_dependency([task_1, task_2], task_2) == [task_1]
+
+    def test_reset(self, graph):
+        graph.graph
+        assert graph.graph_matrix
+        graph._reset()
+        assert not graph.graph_matrix
 
 

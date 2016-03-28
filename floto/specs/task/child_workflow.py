@@ -1,4 +1,4 @@
-from floto.specs import Task
+from floto.specs.task import Task
 import json
 
 
@@ -18,7 +18,7 @@ class ChildWorkflow(Task):
             The version of the workflow type to be scheduled
         workflow_id: str
             The id of the workflow. 
-            Defaults to <workflow_type_name>:<workflow_type_version>:hash(input)
+            Defaults to <workflow_type_name>:<workflow_type_version>:hash(input/requires)
         requires: list
             List of tasks this child workflow execution depends on
         input: dict

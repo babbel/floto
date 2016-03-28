@@ -18,7 +18,7 @@ class Decider(Base):
     """
 
     def __init__(self, decider_spec=None, identity=None):
-        super().__init__()
+        super().__init__(identity=identity)
 
         if isinstance(decider_spec, str):
             self.decider_spec = floto.specs.DeciderSpec.from_json(decider_spec)
@@ -32,26 +32,19 @@ class Decider(Base):
         self.domain = self.decider_spec.domain
 
         self.repeat_workflow = self.decider_spec.repeat_workflow
-        self.activity_task_list = self.decider_spec.activity_task_list or 'floto_activities'
+        self.default_activity_task_list = self.decider_spec.default_activity_task_list
 
         self.decision_builder = None
-
         if self.decider_spec.activity_tasks:
-            self._init_decision_builder(self.decider_spec.activity_tasks)
-
-    def _init_decision_builder(self, activity_tasks):
-        execution_graph = floto.decider.ExecutionGraph(activity_tasks)
-        self.decision_builder = floto.decider.DecisionBuilder(execution_graph,
-                                                              self.activity_task_list)
+            activity_tasks = self.decider_spec.activity_tasks
+            self.decision_builder = floto.decider.DecisionBuilder(activity_tasks,
+                    self.default_activity_task_list)
 
     def get_decisions(self):
         """Heart of the decider logics. Called by floto.decider.Base in each 
         'poll_for_decision_taks loop'. Fills self.decisions, which are returned to SWF.
         """
         logger.debug('Decider.get_decisions...')
-        # TODO: redesign desc
-        desc = self.get_workflow_execution_description()
-        self.decision_builder.current_workflow_execution_description = desc
         self.decisions = self.decision_builder.get_decisions(self.history)
         self.terminate_workflow = self.decision_builder.is_terminate_workflow()
 

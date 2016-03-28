@@ -28,6 +28,8 @@ class History:
         self.set_response_properties(response)
         self.dt_previous_decision_task = None
         self._read_events_up_to_last_decision(response)
+        self.response = response
+
 
     def set_response_properties(self, response):
         self.next_page_token = response['nextPageToken'] if ('nextPageToken' in response) else None
@@ -124,7 +126,6 @@ class History:
         attributes = event_type[:1].lower() + event_type[1:] + 'EventAttributes'
         return event[attributes]
 
-    # TODO test with child workflow
     def get_id_task_event(self, event, allow_read_next_event_page=True):
         """The activity_id or timer_id corresponding to an event."""
         types = {'ActivityTaskFailed': self.get_id_activity_task_event,
@@ -188,16 +189,16 @@ class History:
         return id_
 
     def get_number_activity_failures(self, task):
-        if isinstance(task, floto.specs.ActivityTask):
+        if isinstance(task, floto.specs.task.ActivityTask):
             return self.get_number_activity_task_failures(task.id_)
-        elif isinstance(task, floto.specs.ChildWorkflow):
+        elif isinstance(task, floto.specs.task.ChildWorkflow):
             return self.get_number_child_workflow_failures(task.id_)
         else:
             return 0
 
     def get_number_activity_task_failures(self, activity_id):
         """Number of failed executions of activity task"""
-        dt = self.get_datetime_activity_completed(activity_id, 'ActivityTaskCompleted')
+        dt = self.get_datetime_last_event_of_activity(activity_id, 'ActivityTaskCompleted')
 
         failed = self.get_events_by_task_id_and_type(activity_id, 'ActivityTaskFailed')
         timed_out = self.get_events_by_task_id_and_type(activity_id, 'ActivityTaskTimedOut')
@@ -208,7 +209,7 @@ class History:
         return failed_since_completion + timed_out_since_completion
 
     def get_number_child_workflow_failures(self, id_):
-        dt = self.get_datetime_activity_completed(id_, 'ChildWorkflowExecutionCompleted')
+        dt = self.get_datetime_last_event_of_activity(id_, 'ChildWorkflowExecutionCompleted')
         failed_event_types = ['ChildWorkflowExecutionFailed',
                 'ChildWorkflowExecutionTimedOut',
                 'ChildWorkflowExecutionCanceled',
@@ -232,17 +233,21 @@ class History:
             dt = self.get_event(1)['eventTimestamp']
         return dt
 
-    # TODO test
-    def get_datetime_activity_completed(self, id_, type_):
-        """Datetime of last successful execution of activity. If not found, the datetime of the 
-        workflow start is returned.
+    def get_datetime_last_event_of_activity(self, activity_id, type_):
+        """Datetime of latest event of type <type_> with <activity_id>. If not found, the datetime 
+        of the workflow start is returned.
+        Parameters
+        ----------
+        activity_id: str
+        type_: str
+            Type of the activity, e.g. 'ActivityTaskCompleted', 'ChildWorkflowExecutionCompleted'
         """
-        events = self.get_events_by_task_id_and_type(id_, type_)
+        events = self.get_events_by_task_id_and_type(activity_id, type_)
         if events:
             return events[0]['eventTimestamp']
         elif self._has_next_event_page():
             self._read_next_event_page()
-            return self.get_datetime_activity_completed(id_, type_)
+            return self.get_datetime_last_event_of_activity(activity_id, type_)
         return self.get_event(1)['eventTimestamp']
 
     def get_workflow_input(self):
@@ -264,18 +269,17 @@ class History:
             input = self.get_workflow_input()
         return input
 
-    # TODO test
     def get_result_completed_activity(self, task):
-        if isinstance(task, floto.specs.ActivityTask):
+        if isinstance(task, floto.specs.task.ActivityTask):
             c = self.get_events_by_task_id_and_type(task.id_, 'ActivityTaskCompleted')
-        elif isinstance(task, floto.specs.ChildWorkflow):
+        elif isinstance(task, floto.specs.task.ChildWorkflow):
             c =  self.get_events_by_task_id_and_type(task.id_, 'ChildWorkflowExecutionCompleted')
         else:
             c = None
 
         if c:
             attributes = self.get_event_attributes(c[0])
-            if attributes['result']:
+            if 'result' in attributes:
                 return floto.specs.JSONEncoder.load_string(attributes['result'])
             else:
                 return None
@@ -284,24 +288,22 @@ class History:
             return self.get_result_completed_activity(task)
         return None
 
-    # TODO: Adapt for StartAsNewWorkflow event
     def is_first_decision_task(self):
         """Returns true if this is the first decision task of the workflow"""
         if self.previous_decision_id == 0:
             return True
 
-    # TODO test with child workflow
     def is_task_completed(self, task):
         """
         Parameter
         --------
-        task: floto.specs.ActivityTask or floto.specs.Timer
+        task: floto.specs.task.ActivityTask or floto.specs.task.Timer
         """
-        if isinstance(task, floto.specs.ActivityTask):
+        if isinstance(task, floto.specs.task.ActivityTask):
             return self.is_activity_task_completed(task.id_)
-        elif isinstance(task, floto.specs.Timer):
+        elif isinstance(task, floto.specs.task.Timer):
             return self.is_timer_task_completed(task.id_)
-        elif isinstance(task, floto.specs.ChildWorkflow):
+        elif isinstance(task, floto.specs.task.ChildWorkflow):
             return self.is_child_workflow_completed(task.id_)
         else:
             raise ValueError('Unknown type: {}'.format(task.__class__.__name__))
@@ -331,7 +333,6 @@ class History:
             return self.is_activity_task_completed(activity_id)
         return False
 
-    # TODO test
     def is_child_workflow_completed(self, workflow_id):
         initiated = self.get_events_by_task_id_and_type(workflow_id, 
                 'StartChildWorkflowExecutionInitiated')

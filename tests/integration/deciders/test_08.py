@@ -9,12 +9,13 @@ import floto.api
 
 def test_08():
     rs = floto.specs.retry_strategy.InstantRetry(retries=2)
-    activity_task_1 = floto.specs.ActivityTask(name='activity1', version='v5', retry_strategy=rs)
+    activity_task_1 = floto.specs.task.ActivityTask(name='activity1', version='v5', 
+            retry_strategy=rs)
 
     decider_spec = floto.specs.DeciderSpec(domain='floto_test',
                                            task_list=str(uuid.uuid4()),
                                            activity_tasks=[activity_task_1],
-                                           activity_task_list='floto_activities',
+                                           default_activity_task_list='floto_activities',
                                            repeat_workflow=True)
 
     decider = DeciderEarlyExit(repetitions=2, decider_spec=decider_spec)

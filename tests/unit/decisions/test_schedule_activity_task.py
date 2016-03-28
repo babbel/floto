@@ -48,6 +48,11 @@ class TestScheduleActivityTask():
         d.input={'foo':'bar'}
         assert json.loads(d.decision_attributes()['input'])['foo'] == 'bar'
 
+    def test_decision_attributes_wo_activity_type(self):
+        d = ScheduleActivityTask()
+        with pytest.raises(ValueError):
+            d.decision_attributes()
+
     def test_decision_attributes_with_input_in_init(self):
         activity_type = ActivityType(name='at', version='1')
         d = ScheduleActivityTask(activity_type=activity_type, input={'foo':'bar'})

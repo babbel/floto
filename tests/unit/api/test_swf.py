@@ -37,7 +37,8 @@ class TestSwf(object):
     @pytest.mark.parametrize("args, api_args",[
         ({}, {}),
         ({'page_token':123}, {'nextPageToken':123}),
-        ({'page_size':10}, {'maximumPageSize':10})])
+        ({'page_size':10}, {'maximumPageSize':10}),
+        ({'identity':'did'}, {'identity':'did'})])
     def test_poll_for_decision_task_page(self, mocker, args, api_args):
         client_mock = type("ClientMock", (object,), {"poll_for_decision_task":Mock()})
         mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=client_mock())

@@ -1,33 +1,48 @@
-
 import floto
 import floto.decisions
 import floto.specs
+import copy
+import gzip
 
 import logging
-
 logger = logging.getLogger(__name__)
 
+import json
 
 class DecisionBuilder:
-    def __init__(self, execution_graph, activity_task_list):
+    def __init__(self, activity_tasks, default_activity_task_list):
+        if not activity_tasks:
+            raise ValueError("no activity tasks!")
         self.workflow_fail = False
         self.workflow_complete = False
-        self.execution_graph = execution_graph
+        self.initial_activity_tasks = activity_tasks
         self.history = None
-        self.activity_task_list = activity_task_list
-        self.current_workflow_execution_description = None
-        self.decision_input = floto.decider.DecisionInput(execution_graph=execution_graph)
+        self.default_activity_task_list = default_activity_task_list
+        self.decision_input = floto.decider.DecisionInput()
+
+        self._execution_graph = None
+        self.first_event_id = None
+        self.last_event_id = None
+
+        self._decompress_generator_result = False
 
     def get_decisions(self, history):
+        self._execution_graph = None
         self._set_history(history)
 
         self.workflow_fail = False
         self.workflow_complete = False
      
-        first_event_id = self.history.previous_decision_id
-        last_event_id = self.history.decision_task_started_event_id
-        decisions = self._collect_decisions(first_event_id, last_event_id)
+        self.first_event_id = self.history.previous_decision_id
+        self.last_event_id = self.history.decision_task_started_event_id
+        decisions = self._collect_decisions()
         return decisions
+
+    @property 
+    def execution_graph(self):
+        if not self._execution_graph:
+            self._build_execution_logic()
+        return self._execution_graph
 
     def _set_history(self, history):
         self.history = history
@@ -36,13 +51,15 @@ class DecisionBuilder:
     def is_terminate_workflow(self):
         return self.workflow_fail or self.workflow_complete
 
-    def _collect_decisions(self, first_event_id, last_event_id):
-        logger.debug('DecisionBuilder._collect_decisions({},{})'.format(first_event_id, last_event_id))
-        if first_event_id == 0:
+    def _collect_decisions(self):
+        logger.debug('DecisionBuilder._collect_decisions({},{})'.format(self.first_event_id, 
+            self.last_event_id))
+
+        if self.first_event_id == 0:
             return self.get_decisions_after_workflow_start()
 
         decisions = []
-        events = self.history.get_events_for_decision(first_event_id, last_event_id)
+        events = self.history.get_events_for_decision(self.first_event_id, self.last_event_id)
 
         if events['faulty']:
             decisions.extend(self.get_decisions_faulty_tasks(events['faulty']))
@@ -56,6 +73,7 @@ class DecisionBuilder:
 
         if not self.is_terminate_workflow() and events['decision_failed']:
             decisions.extend(self.get_decisions_decision_failed(events['decision_failed']))
+
         return decisions
 
     def get_decisions_after_workflow_start(self):
@@ -112,6 +130,7 @@ class DecisionBuilder:
             List of ActivityTaskCompleted or TimerFired events
         """
         logger.debug('DecisionBuilder.get_decisions_after_activity_completion...')
+
         task_ids = [self.history.get_id_task_event(e) for e in events]
         tasks = self.get_tasks_to_be_scheduled(task_ids)
 
@@ -125,7 +144,12 @@ class DecisionBuilder:
         for event in events_decision_failed:
             last_event_id = self.history.get_event_attributes(event)['startedEventId']
             first_event_id = self.history.get_id_previous_started(event)
-            decisions.extend(self._collect_decisions(first_event_id, last_event_id))
+            builder = floto.decider.DecisionBuilder(copy.deepcopy(self.initial_activity_tasks), 
+                    self.default_activity_task_list)
+            builder.first_event_id = first_event_id
+            builder.last_event_id = last_event_id
+            builder._set_history(self.history)
+            decisions.extend(builder._collect_decisions())
         return decisions
 
     def get_decisions_after_successfull_workflow_execution(self):
@@ -135,13 +159,13 @@ class DecisionBuilder:
         return [d]
 
     def get_decision_schedule_activity(self, task, is_failed_task=False):
-        if isinstance(task, floto.specs.ActivityTask):
+        if isinstance(task, floto.specs.task.ActivityTask):
             input_ = self.decision_input.get_input_task(task, is_failed_task)
             return self.get_decision_schedule_activity_task(task, input_)
-        elif isinstance(task, floto.specs.ChildWorkflow):
+        elif isinstance(task, floto.specs.task.ChildWorkflow):
             input_ = self.decision_input.get_input_task(task, is_failed_task)
             return self.get_decision_start_child_workflow_execution(task, input_)
-        elif isinstance(task, floto.specs.Timer):
+        elif isinstance(task, floto.specs.task.Timer):
             return self.get_decision_start_timer(task)
         else:
             m = 'Do not know how to get decision for task of type: {}'.format(type(task))
@@ -155,9 +179,10 @@ class DecisionBuilder:
     def get_decision_schedule_activity_task(self, activity_task=None, input=None):
         activity_type = floto.api.ActivityType(name=activity_task.name,
                                                version=activity_task.version)
+        task_list = activity_task.task_list or self.default_activity_task_list
         decision = floto.decisions.ScheduleActivityTask(activity_type=activity_type,
                 activity_id=activity_task.id_,
-                task_list=self.activity_task_list, input=input)
+                task_list=task_list, input=input)
         return decision
 
     def get_decision_start_timer(self, timer_task):
@@ -179,13 +204,20 @@ class DecisionBuilder:
     def all_workflow_tasks_finished(self, completed_tasks):
         """Return True if all tasks of this workflow have finished, False otherwise."""
         logger.debug('DecisionBuilder.all_workflow_tasks_finished({})'.format((completed_tasks)))
-        if self.completed_have_depending_tasks(completed_tasks):
+
+        if self.completed_contain_generator(completed_tasks):
             return False
-        if self.open_task_counts():
+        if self.completed_have_depending_tasks(completed_tasks):
             return False
         if not self.outgoing_vertices_completed():
             return False
         return True
+
+    def completed_contain_generator(self, completed_tasks):
+        for task in completed_tasks:
+            id_ = self.history.get_id_task_event(task)
+            if isinstance(self.execution_graph.tasks_by_id[id_], floto.specs.task.Generator):
+                return True
 
     def completed_have_depending_tasks(self, completed_tasks):
         """Return True if any of the tasks in "completed_tasks" has a task which depends on it.
@@ -196,22 +228,6 @@ class DecisionBuilder:
             depending_tasks = self.execution_graph.get_depending_tasks(id_)
             if depending_tasks:
                 return True
-        return False
-
-    def open_task_counts(self):
-        """Return True if there are "openActivityTasks" or "openTimers" in the "workflow execution
-        description. False otherwise."""
-        if not self.current_workflow_execution_description:
-            return False
-
-        description = self.current_workflow_execution_description
-        open_activity_tasks = description['openCounts']['openActivityTasks']
-        open_timers = description['openCounts']['openTimers']
-        open_child_workflows = description['openCounts']['openChildWorkflowExecutions']
-        open_lambda_functions = description['openCounts']['openLambdaFunctions']
-
-        if open_activity_tasks or open_timers or open_child_workflows or open_lambda_functions:
-            return True
         return False
 
     def outgoing_vertices_completed(self):
@@ -252,3 +268,55 @@ class DecisionBuilder:
 
     def uniqify_activity_tasks(self, activity_tasks):
         return list({t.id_: t for t in activity_tasks}.values())
+
+    def _update_execution_graph_with_completed_events(self, completed_events):
+        """Updates the execution graph if the completed activities contain generators."""
+        for e in completed_events: 
+            activity_id = self.history.get_id_task_event(e)
+            g = self._get_generator(e)
+            if g: 
+                self._update_execution_graph(g)
+                self.decision_input._execution_graph = self.execution_graph
+
+    def _update_execution_graph(self, generator):
+        """Updates the execution graph."""
+        result_generator = self.history.get_result_completed_activity(generator)
+        if self._decompress_generator_result:
+            new_tasks_json = self._decompress_result(result_generator)
+        else:
+            new_tasks_json = json.dumps(result_generator)
+
+        new_tasks = json.loads(new_tasks_json, object_hook=floto.specs.JSONEncoder.object_hook)
+        self.execution_graph.update(generator, new_tasks)
+
+    def _decompress_result(self, compressed_result):
+        result_bytes = bytes([int(c, 16) for c in compressed_result.split('x')])
+        result = gzip.decompress(result_bytes).decode()
+        return result
+            
+    def _get_generator(self, completed_event):
+        """Takes a completed event as defined by floto.History.get_events_for_decision and returns
+        the corresponding floto.specs.task.Generator if generator is found with id_.
+        Returns
+        -------
+        generator: <floto.specs.task.Generator>
+        """
+        g = None
+        if completed_event['eventType'] == 'ActivityTaskCompleted':
+            activity_id = self.history.get_id_task_event(completed_event)
+            activity = self.execution_graph.tasks_by_id[activity_id]
+            if isinstance(activity, floto.specs.task.Generator):
+                g = activity
+        return g
+
+    def _build_execution_logic(self):
+        copy_initial_tasks = copy.deepcopy(self.initial_activity_tasks)
+        self._execution_graph = floto.decider.ExecutionGraph(copy_initial_tasks)
+        self.decision_input._execution_graph = self.execution_graph
+
+        if self.execution_graph.has_generator_task():
+            events = self.history.get_events_for_decision(1, self.last_event_id)
+            completed = events['completed']
+            self._update_execution_graph_with_completed_events(completed)
+
+

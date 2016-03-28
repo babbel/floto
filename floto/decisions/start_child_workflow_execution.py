@@ -1,14 +1,21 @@
-import json
-import logging
-
 from floto.decisions import Decision
+import floto.specs
+
+import logging
 
 logger = logging.getLogger(__name__)
 
 class StartChildWorkflowExecution(Decision):
     def __init__(self, **args):
-        # TODO proper docstring
         """
+        Parameters
+        ----------
+        workflow_id: str
+        workflow_type: floto.api.WorkflowType
+        task_list: str
+            The decider task list of the child workflow.
+        input: str, dict
+
         Optional parameters
         -------------------
         startChildWorkflowExecutionDecisionAttributes.taskList
@@ -27,7 +34,7 @@ class StartChildWorkflowExecution(Decision):
             attributes['taskList'] = {'name': args['task_list']}
 
         if 'input' in args:
-            attributes['input'] = json.dumps(args['input'])
+            attributes['input'] = floto.specs.JSONEncoder.dump_object(args['input'])
 
         self.startChildWorkflowExecutionDecisionAttributes = attributes
 

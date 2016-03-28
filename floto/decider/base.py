@@ -1,8 +1,8 @@
 import multiprocessing
 import sys
+import socket
 
 import floto.api
-# import floto.decisions
 
 import logging
 
@@ -10,9 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class Base:
-    domain = None
-
-    def __init__(self, swf=None):
+    def __init__(self, swf=None, identity=None):
         """Base class for deciders.
         Parameters
         ----------
@@ -25,8 +23,9 @@ class Base:
         self.decisions = []
         self.run_id = None
         self.workflow_id = None
+        self.domain = None
+        self.identity = identity or socket.getfqdn(socket.gethostname())
 
-        self.max_polls = sys.maxsize
         self.swf = swf or floto.api.Swf()
         self.task_list = None
 
@@ -38,6 +37,7 @@ class Base:
     def complete(self):
         logger.debug('Base.complete...')
         decisions = [d.get_decision() for d in self.decisions]
+        
         try:
             self.swf.client.respond_decision_task_completed(taskToken=self.task_token,
                                                             decisions=decisions)
@@ -56,9 +56,9 @@ class Base:
     def poll_for_decision(self):
         """Polls for decision tasks. If a new decision task has been scheduled, the response, 
         history and task token are stored in the corresponding instance variables."""
-        # TODO: Catch error if service is not available
         self.last_response = self.swf.poll_for_decision_task_page(domain=self.domain,
-                                                                  task_list=self.task_list)
+                                                                  task_list=self.task_list,
+                                                                  identity=self.identity)
         if 'taskToken' in self.last_response:
             self.task_token = self.last_response['taskToken']
             self.history = floto.History(domain=self.domain, task_list=self.task_list,
@@ -82,16 +82,11 @@ class Base:
             self._run()
 
     def _run(self):
-        # TODO remove poll counting before use in prodcuction
-        number_polls = 0
-        while (not self.terminate_decider) and (number_polls < self.max_polls):
+        while not self.terminate_decider:
             self.poll_for_decision()
-            number_polls += 1
-
             if self.task_token:
                 self.get_decisions()
                 self.complete()
-        logger.debug('Base._run ended. Polls: {}'.format(number_polls))
 
     def get_workflow_execution_description(self):
         return self.swf.describe_workflow_execution(self.domain, self.workflow_id, self.run_id)

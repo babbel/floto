@@ -22,7 +22,7 @@ class HeartbeatSender:
     def _send_heartbeat(self, timeout, task_token):
         while self.is_send_heartbeat.value:
             try:
-                self.swf.record_activity_task_heartbeat(task_token=task_token, details=None)
+                response = self.swf.record_activity_task_heartbeat(task_token=task_token, details=None)
             except Exception:
                 pass
             time.sleep(timeout)

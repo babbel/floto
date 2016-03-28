@@ -13,7 +13,6 @@ def activity1(context):
     print('activity1_v5 finished' + 20 * '.')
     return result
 
-
 @floto.activity(name='activity2', version='v4')
 def activity2():
     print('activity2 started' + 20 * '.')
@@ -72,30 +71,40 @@ def activity_4(context):
     return context
 
 
-TIMEOUT_COUNT_1 = 0
-
-
-@floto.activity(name='activity5', version='v1')
+@floto.activity(name='activity5', version='v2')
 def activity_5():
     print('activity_5 started' + 20 * '.')
-    global TIMEOUT_COUNT_1
-    TIMEOUT_COUNT_1 += 1
-    result = {'sleep_time': 0}
-    if TIMEOUT_COUNT_1 <= 1:
-        print('activity_5 sleeping for 2 seconds' + 20 * '.')
-        time.sleep(2)
-        result['sleep_time'] = 2
-    else:
-        TIMEOUT_COUNT_1 = 0
+    print('Sleeping for 30s.')
+    time.sleep(30)
     print('activity_5 finished' + 20 * '.')
-    return result
+    return {'status':'finished'}
+
+@floto.generator(name='generator1', version='v1')
+def generator1():
+    print('generator_1 started' + 20 * '.')
+    rs = floto.specs.retry_strategy.InstantRetry(retries=2)
+    task_1 = floto.specs.task.ActivityTask(name='activity4', version='v2', retry_strategy=rs, 
+            input={'file':'a.in'})
+    task_2 = floto.specs.task.ActivityTask(name='activity4', version='v2', retry_strategy=rs,
+            input={'file':'b.in'})
+    print('generator_1 finished' + 20 * '.')
+    return [task_1, task_2]
+
+@floto.activity(name='activity6', version='v1')
+def activity_6(context):
+    print('activity_6 started' + 20 * '.')
+    time.sleep(7)
+    processed_files = [v['activity_task']['file'] for k,v in context.items() if 'activity4' in k]
+    print('activity_6 finished' + 20 * '.')
+    return processed_files
+
 
 
 class ActivityWorkerProcess(object):
     def __init__(self, domain, task_list):
         self._process = None
-        self.worker = floto.ActivityWorker(domain=domain, task_list=task_list)
-        self.worker.heartbeat = 2
+        self.worker = floto.ActivityWorker(domain=domain, task_list=task_list, 
+            task_heartbeat_in_seconds=5)
 
     def start(self):
         self._process = mp.Process(target=self.worker.run)

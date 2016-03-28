@@ -23,7 +23,8 @@ class ActivityWorker:
     my_activity_worker.run()
     """
 
-    def __init__(self, swf=None, task_list=None, domain=None, task_heartbeat_in_seconds=None, identity=None):
+    def __init__(self, swf=None, task_list=None, domain=None, task_heartbeat_in_seconds=None, 
+            identity=None):
         """
         Parameters
         ----------
@@ -51,7 +52,7 @@ class ActivityWorker:
         self.domain = domain
         self.task_heartbeat_in_seconds = task_heartbeat_in_seconds
         if self.task_heartbeat_in_seconds is None:
-            self.task_heartbeat_in_seconds = 120
+            self.task_heartbeat_in_seconds = 90
 
         self.identity = identity
         if self.identity is None:
@@ -121,10 +122,8 @@ class ActivityWorker:
     def complete(self):
         logger.debug('ActivityWorker.complete...')
         args = {'taskToken': self.task_token}
-        if self.result and isinstance(self.result, str):
-            args['result'] = self.result
-        if self.result and isinstance(self.result, dict):
-            args['result'] = json.dumps(self.result)
+        if self.result:
+            args['result'] = floto.specs.JSONEncoder.dump_object(self.result)
         self.swf.client.respond_activity_task_completed(**args)
 
     def start_heartbeat(self):

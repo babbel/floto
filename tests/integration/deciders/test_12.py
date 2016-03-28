@@ -6,7 +6,8 @@ from test_helper import is_workflow_completed
 import floto
 import floto.api
 import floto.decider
-from floto.specs import ActivityTask, Timer, DeciderSpec
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask, Timer
 from floto.specs.retry_strategy import InstantRetry
 
 
@@ -28,7 +29,7 @@ def test_12():
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),
                                activity_tasks=tasks,
-                               activity_task_list='floto_activities',
+                               default_activity_task_list='floto_activities',
                                terminate_decider_after_completion=True)
 
     decider_1 = floto.decider.Decider(decider_spec=decider_spec)

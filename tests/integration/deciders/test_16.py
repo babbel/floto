@@ -6,7 +6,8 @@ from test_helper import get_fail_workflow_execution
 import floto
 import floto.api
 import floto.decider
-from floto.specs import ActivityTask, DeciderSpec, ChildWorkflow
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask, ChildWorkflow
 from floto.specs.retry_strategy import InstantRetry
 
 
@@ -15,17 +16,18 @@ def decider_spec_child_workflow():
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list='child_workflow_task_list',
                                activity_tasks=[task_1],
-                               activity_task_list='floto_activities',
+                               default_activity_task_list='floto_activities',
                                repeat_workflow=False)
     return decider_spec
 
 def decider_spec_workflow():
-    rs = InstantRetry(retries=1)
+    rs = InstantRetry(retries=3)
     child_workflow = ChildWorkflow(workflow_type_name='test_child_workflow', 
             workflow_type_version='v2', retry_strategy=rs, task_list='child_workflow_task_list')
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),
                                activity_tasks=[child_workflow],
+                               default_activity_task_list='floto_activities',
                                terminate_decider_after_completion=True)
     return decider_spec
 

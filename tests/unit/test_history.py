@@ -3,6 +3,7 @@ from unittest.mock import PropertyMock, Mock
 
 import json
 import floto
+import floto.specs.task
 import datetime
 
 class SwfMock:
@@ -191,8 +192,7 @@ class TestHistory():
         h = floto.History(domain='d', task_list='tl', response=empty_response)
         assert h.get_datetime_previous_decision() == dt1
 
-    def test_get_datetime_previous_decision_contained_in_page(self, empty_response, dt1, dt2, dt3,
-            dt4):
+    def test_get_datetime_previous_decision_contained_in_page(self, empty_response, dt1, dt2):
         events = [ { 'eventId': 2,
                      'eventTimestamp': dt2,
                      'eventType': 'DecisionTaskStarted'},
@@ -213,6 +213,12 @@ class TestHistory():
         h = floto.History(domain='d', task_list='tl', response=page1_decision_response)
         dt1 =  datetime.datetime(2016, 1, 12, hour=1, tzinfo=datetime.timezone.utc)
         h.get_datetime_previous_decision() == dt1
+
+    def test_get_datetime_last_event_of_activitiy(self, mocker, history, dt1):
+        event = {'eventTimestamp':dt1}
+        mocker.patch('floto.History.get_events_by_task_id_and_type', return_value=[event])
+        assert history.get_datetime_last_event_of_activity('a_id', 'TaskCompleted') == dt1
+        history.get_events_by_task_id_and_type.assert_called_once_with('a_id', 'TaskCompleted')
 
     def test_read_events_up_to_last_decision(self, mocker, page1_decision_response,
             page2_decision_response):
@@ -288,13 +294,18 @@ class TestHistory():
 
     def test_task_completed_with_activity_task(self, mocker, history):
         mocker.patch('floto.History.is_activity_task_completed', return_value=True)
-        activity_task = floto.specs.ActivityTask()
+        activity_task = floto.specs.task.ActivityTask()
         assert history.is_task_completed(activity_task)
 
     def test_task_complete_with_timer(self, mocker, history):
         mocker.patch('floto.History.is_timer_task_completed', return_value=True)
-        timer = floto.specs.Timer()
+        timer = floto.specs.task.Timer()
         assert history.is_task_completed(timer)
+
+    def test_task_complete_with_child_workflow(self, mocker, history):
+        mocker.patch('floto.History.is_child_workflow_completed', return_value=True)
+        cw = floto.specs.task.ChildWorkflow()
+        assert history.is_task_completed(cw)
 
     def test_is_task_completed_raises(self, history):
         with pytest.raises(ValueError):
@@ -349,6 +360,19 @@ class TestHistory():
         assert h._has_next_event_page()
         assert h.is_timer_task_completed('t_id')
         assert not h._has_next_event_page()
+
+    def test_is_child_workflow_completed(self, mocker, dt1, dt2, history):
+        completed_event = {'eventType':'ChildWorkflowExecutionCompleted',
+                'eventTimestamp':dt2}
+        initiated_event = {'eventType':'StartChildWorkflowExecutionInitiated',
+                'eventTimestamp':dt1}
+
+        events = {'ChildWorkflowExecutionCompleted':[completed_event],
+                'StartChildWorkflowExecutionInitiated': [initiated_event]}
+
+        mock_fct = lambda id_, type_: events[type_]
+        history.get_events_by_task_id_and_type = mock_fct
+        assert history.is_child_workflow_completed('wid')
 
     def test_get_event_by_task_id_and_type_no_event(self, init_response, dt1, dt2):
         events = [{'eventId':3, 
@@ -425,9 +449,16 @@ class TestHistory():
     @pytest.mark.parametrize('event_type',['ChildWorkflowExecutionFailed', 
         'ChildWorkflowExecutionTimedOut',
         'ChildWorkflowExecutionCanceled',
-        'ChildWorkflowExecutionTerminated'])
-    def test_get_id_task_event(self, history, mocker, event_type):
+        'ChildWorkflowExecutionTerminated',
+        'ChildWorkflowExecutionCompleted'])
+    def test_get_id_task_event_child_workflow_event(self, history, mocker, event_type):
         mocker.patch('floto.History.get_id_child_workflow_event', return_value='cw_id')
+        assert history.get_id_task_event({'eventType':event_type}) == 'cw_id'
+
+    def test_get_id_task_event_child_workflow_initiated(self, history, mocker):
+        mocker.patch('floto.History.get_id_start_child_workflow_execution_initiated', 
+                return_value='cw_id')
+        event_type = 'StartChildWorkflowExecutionInitiated'
         assert history.get_id_task_event({'eventType':event_type}) == 'cw_id'
 
     def test_get_id_start_child_workflow_execution_initiated(self, history):
@@ -570,12 +601,12 @@ class TestHistory():
 
     def test_get_number_activity_failures_activity_task(self, history, mocker):
         mocker.patch('floto.History.get_number_activity_task_failures')
-        history.get_number_activity_failures(floto.specs.ActivityTask(activity_id='tid'))
+        history.get_number_activity_failures(floto.specs.task.ActivityTask(activity_id='tid'))
         history.get_number_activity_task_failures.assert_called_once_with('tid')
 
     def test_get_number_activity_failures_child_workflow(self, history, mocker):
         mocker.patch('floto.History.get_number_child_workflow_failures')
-        history.get_number_activity_failures(floto.specs.ChildWorkflow(workflow_id='wid'))
+        history.get_number_activity_failures(floto.specs.task.ChildWorkflow(workflow_id='wid'))
         history.get_number_child_workflow_failures.assert_called_once_with('wid')
 
     def test_get_number_activity_failures_unknown_type(self, history):
@@ -787,8 +818,23 @@ class TestHistory():
                    'activityTaskScheduledEventAttributes':{'activityId':'a_id'}}
         empty_response['events'] = [activity_task_completed_event, activity_task_scheduled_event]
         h = floto.History(domain='d', task_list='tl', response=empty_response)
-        task = floto.specs.ActivityTask(activity_id='a_id')
+        task = floto.specs.task.ActivityTask(activity_id='a_id')
         assert h.get_result_completed_activity(task) == {'foo':'bar'}
+
+    def test_get_result_completed_activity_wo_result(self, dt1, dt2, empty_response):
+        activity_task_completed_event = {'eventId':2,
+                'eventType':'ActivityTaskCompleted',
+                'eventTimestamp':dt2,
+                'activityTaskCompletedEventAttributes':{'scheduledEventId':1}}
+
+        activity_task_scheduled_event = {'eventId':1,
+                   'eventType':'ActivityTaskScheduled',
+                   'eventTimestamp':dt1,
+                   'activityTaskScheduledEventAttributes':{'activityId':'a_id'}}
+        empty_response['events'] = [activity_task_completed_event, activity_task_scheduled_event]
+        h = floto.History(domain='d', task_list='tl', response=empty_response)
+        task = floto.specs.task.ActivityTask(activity_id='a_id')
+        assert not h.get_result_completed_activity(task)
 
     def test_get_result_completed_activity_rescheduled(self, dt1, dt2, dt3, page1_response, 
             page2_response, mocker):
@@ -816,7 +862,7 @@ class TestHistory():
         mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=swf_mock)
 
         h = floto.History(domain='d', task_list='tl', response=page1_response)
-        task = floto.specs.ActivityTask(activity_id='a_id')
+        task = floto.specs.task.ActivityTask(activity_id='a_id')
         assert h.get_result_completed_activity(task) == {'foo':'bar'} 
 
     @pytest.mark.parametrize('events,result',

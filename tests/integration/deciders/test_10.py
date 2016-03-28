@@ -5,17 +5,18 @@ from test_helper import get_result
 import floto
 import floto.api
 import floto.decider
-from floto.specs import ActivityTask, DeciderSpec
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask
 
 
 def test_10():
-    rs = floto.specs.retry_strategy.InstantRetry(retries=7)
-    activity_task = ActivityTask(name='activity5', version='v1', retry_strategy=rs)
+    rs = floto.specs.retry_strategy.InstantRetry(retries=2)
+    activity_task = ActivityTask(name='activity5', version='v2', retry_strategy=rs)
 
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),
                                activity_tasks=[activity_task],
-                               activity_task_list='floto_activities',
+                               default_activity_task_list='floto_activities',
                                terminate_decider_after_completion=True)
 
     decider = floto.decider.Decider(decider_spec=decider_spec)

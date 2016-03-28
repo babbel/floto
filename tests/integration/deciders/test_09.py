@@ -5,7 +5,8 @@ from test_helper import get_result
 
 import floto
 import floto.api
-from floto.specs import ActivityTask, Timer, DeciderSpec
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask, Timer
 from floto.specs.retry_strategy import InstantRetry
 
 
@@ -27,7 +28,7 @@ def test_09():
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),
                                activity_tasks=tasks,
-                               activity_task_list='floto_activities',
+                               default_activity_task_list='floto_activities',
                                repeat_workflow=True)
 
     decider = DeciderEarlyExit(repetitions=2, decider_spec=decider_spec)

@@ -5,7 +5,7 @@ import random
 logger = logging.getLogger(__name__)
 
 domain = 'floto_test'
-activity_task_list = 'demo_step_activities_philipp'
+activity_task_list = 'demo_step_activities'
 
 # ---------------------------------- #
 # Create the activity functions
@@ -46,12 +46,19 @@ def step4(context):
 
     results_step2 = [v['result'] for k,v in context.items() if 'demo_step2' in k]
 
-    activity_tasks = [floto.specs.ActivityTask(name='demo_step2', version='v2', 
+    activity_tasks = [floto.specs.task.ActivityTask(name='demo_step2', version='v2', 
         input={'start_val':start_val}) for start_val in results_step2]
 
-    decider_spec = floto.specs.DeciderSpec(activity_tasks=activity_tasks)
+    decider_spec = floto.specs.DeciderSpec(domain='floto_test',
+             default_activity_task_list=activity_task_list,
+             activity_tasks=activity_tasks)
 
-    return {'decider_spec':decider_spec.to_json()}
+    floto.api.Swf().signal_workflow_execution(domain='floto_test', 
+            workflow_id='floto_daemon',
+            signal_name='startChildWorkflowExecution',
+            input={'decider_spec':decider_spec})
+
+    return {'status':'success'}
 
 
 worker_1 = floto.ActivityWorker(domain=domain, task_list=activity_task_list)

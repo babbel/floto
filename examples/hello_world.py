@@ -26,9 +26,23 @@ activity_type = floto.api.ActivityType(domain='floto_test', name='simple_activit
 swf.register_activity_type(activity_type)
 
 
-################################
-### Create a worker function ###
-################################
+################################################
+### Create a task and the decider and run it ###
+################################################
+
+simple_task = floto.specs.task.ActivityTask(name='simple_activity', version='v1')
+decider_spec = floto.specs.DeciderSpec(domain='floto_test',
+                                       task_list='simple_decider',
+                                       default_activity_task_list='hello_world_atl',
+                                       terminate_decider_after_completion=True,
+                                       activity_tasks=[simple_task])
+
+decider = floto.decider.Decider(decider_spec=decider_spec)
+decider.run(separate_process=True)
+
+#############################################
+### Create an activity and start a worker ###
+#############################################
 
 @floto.activity(name='simple_activity', version='v1')
 def simple_activity():
@@ -41,28 +55,15 @@ def simple_activity():
     print('I\'m done.')
 
 
-##########################################
-### Create a simple decider and run it ###
-##########################################
-
-simple_task = floto.specs.ActivityTask(name='simple_activity', version='v1')
-decider_spec = floto.specs.DeciderSpec(activity_task_list='hello_world_atl',
-                                       activity_tasks=[simple_task])
-
-decider = floto.decider.Decider(domain='floto_test', task_list='simple_decider',
-                                decider_spec=decider_spec)
-decider.run(separate_process=True)
-
-
 def start_worker():
     worker = floto.ActivityWorker(domain='floto_test', task_list='hello_world_atl')
-    worker.max_polls = 1
     worker.run()
 
 
 if __name__ == '__main__':
-    print('\nStarting worker in different processe.')
+    print('\nStarting worker in different process.')
     worker = Process(target=start_worker)
+    worker.start()
 
     print('Starting workflow...')
     swf.start_workflow_execution(domain='floto_test',
@@ -70,8 +71,7 @@ if __name__ == '__main__':
                                  workflow_type_version=workflow_type.version,
                                  task_list='simple_decider')
 
-    print('Starting worker...')
-    worker.start()
+    # Wait for the workflow to finish
+    decider._separate_process.join()
+    worker.terminate()
 
-    # Wait for the worker to finish
-    worker.join()

@@ -4,7 +4,8 @@ from test_helper import get_result, SlowDecider
 
 import floto
 import floto.api
-from floto.specs import ActivityTask, DeciderSpec
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask
 from floto.specs.retry_strategy import InstantRetry
 
 
@@ -15,7 +16,7 @@ def test_11():
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),
                                activity_tasks=[activity_task_1],
-                               activity_task_list='floto_activities',
+                               default_activity_task_list='floto_activities',
                                terminate_decider_after_completion=True)
 
     decider = SlowDecider(decider_spec)

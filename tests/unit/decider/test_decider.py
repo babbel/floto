@@ -1,5 +1,6 @@
 import pytest
-from floto.specs import DeciderSpec, ActivityTask
+from floto.specs import DeciderSpec
+from floto.specs.task import ActivityTask
 import floto.decider
 from unittest.mock import Mock
 
@@ -29,10 +30,11 @@ def decider(decider_spec):
 
 class TestDecider():
     def test_init_with_decider_spec(self, decider_spec, task_1):
-        d =  floto.decider.Decider(decider_spec=decider_spec)
+        d =  floto.decider.Decider(decider_spec=decider_spec, identity='did')
         assert isinstance(d.decider_spec.activity_tasks, list)
         assert d.decider_spec.activity_tasks[0] == task_1 
         assert d.repeat_workflow == False
+        assert d.identity == 'did'
     
     def test_init_raises_wo_domain(self, decider_spec):
         decider_spec.domain = None
@@ -46,12 +48,12 @@ class TestDecider():
 
     def test_default_activity_task_list(self, decider_spec):
         d =  floto.decider.Decider(decider_spec=decider_spec)
-        assert d.activity_task_list == 'floto_activities'
+        assert not d.default_activity_task_list
 
     def test_activity_task_list(self, decider_spec):
-        decider_spec.activity_task_list = 'atl'
+        decider_spec.default_activity_task_list = 'atl'
         d =  floto.decider.Decider(decider_spec=decider_spec)
-        assert d.activity_task_list == 'atl'
+        assert d.default_activity_task_list == 'atl'
 
     def test_domain(self, decider_spec):
         decider_spec.domain = 'my_domain'
@@ -75,11 +77,9 @@ class TestDecider():
     def test_get_decisions(self, decider, mocker):
         mocker.patch('floto.decider.DecisionBuilder.get_decisions', return_value=['d'])
         mocker.patch('floto.decider.DecisionBuilder.is_terminate_workflow', return_value=True)
-        mocker.patch('floto.decider.Base.get_workflow_execution_description', return_value='desc')
         decider.get_decisions()
         assert decider.decisions == ['d']
         assert decider.terminate_workflow == True
-        assert decider.decision_builder.current_workflow_execution_description == 'desc'
 
     def test_tear_down_do_not_repeat(self, decider):
         decider.swf.start_workflow_execution = Mock()
