@@ -4,13 +4,13 @@ from floto.specs.task import Task
 class Timer(Task):
     """Timer task spec."""
 
-    def __init__(self, id_=None, requires=None, delay_in_seconds=None):
+    def __init__(self, *, id_, requires=None, delay_in_seconds=None):
         """
-        Parameter
-        --------
-        id_: str [Required]
+        Parameters
+        ----------
+        id_: str
             The unique id of the timer task
-        requires: list
+        requires: Optional[list[<floto.specs.task>]]
             List of other tasks on which this timer depends on when the workflow is executed
         delay_in_seconds: int
         """
@@ -21,4 +21,6 @@ class Timer(Task):
     def deserialized(cls, **kwargs):
         """Construct an instance from a dict of attributes
         """
+        # Remove 'type' key, just in case there still is one
+        kwargs.pop('type', None)
         return cls(**kwargs)

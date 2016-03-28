@@ -50,4 +50,6 @@ class ChildWorkflow(Task):
         Note that the parameter `workflow_id` is assigned to the attribute `id_ `
         """
         kwargs['workflow_id'] = kwargs.pop('id_', None)
+        # Remove 'type' key, just in case there still is one
+        kwargs.pop('type', None)
         return cls(**kwargs)

@@ -19,4 +19,6 @@ class Generator(ActivityTask):
         Note that the parameter `activity_id` is assigned to the attribute `id_ `
         """
         kwargs['activity_id'] = kwargs.pop('id_', None)
+        # Remove 'type' key, just in case there still is one
+        kwargs.pop('type', None)
         return cls(**kwargs)
