@@ -23,10 +23,10 @@ def json_decider_spec(decider_spec):
 
 class TestDaemon():
     def test_init(self):
-        assert floto.decider.Daemon().task_list == 'floto_daemon'
+        assert floto.decider.Daemon(domain='d').task_list == 'floto_daemon'
 
     def test_init_with_swf(self):
-        d = floto.decider.Daemon(swf='my_swf')
+        d = floto.decider.Daemon(domain='d', swf='my_swf')
         assert d.swf == 'my_swf'
 
     def test_init_with_args(self):

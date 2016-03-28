@@ -5,11 +5,10 @@ from floto.decider import Base
 
 
 class Daemon(Base):
-    def __init__(self, domain=None, task_list=None, swf=None):
+    def __init__(self, *, domain, task_list=None, swf=None):
         super().__init__(swf=swf)
         self.task_list = task_list or 'floto_daemon'
-        if domain:
-            self.domain = domain
+        self.domain = domain
 
     def get_decisions(self):
         signals = self.history.get_events_up_to_last_decision('WorkflowExecutionSignaled')
@@ -39,6 +38,7 @@ class Daemon(Base):
         return decision
 
     def get_decision_start_child_workflow_execution(self):
+        # TODO: this is hardcoded, fix!
         child_workflow_type = floto.api.WorkflowType(domain='d', name='child_workflow', version='v1')
         child_workflow_id = str(uuid.uuid4())
         child_workflow_task_list = 'task_list_{}'.format(child_workflow_id)
