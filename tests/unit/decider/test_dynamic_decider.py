@@ -5,7 +5,7 @@ from floto.specs import DeciderSpec
 
 @pytest.fixture
 def task():
-    return ActivityTask(name='activity2', version='v1') 
+    return ActivityTask(domain='d', name='activity2', version='v1')
 
 @pytest.fixture
 def decider_spec(task):
@@ -40,8 +40,9 @@ class TestDynamicDecider:
         assert decider.terminate_workflow
 
     def test_activity_tasks_from_inpu(self, decider):
-        d =  {'activity_tasks': [{'id_': 'fileLength:1:2be88ca424',
+        d =  {'activity_tasks': [{'id_': 'fileLength:1:2be88ca424:d',
                                           'name': 'fileLength',
+                                          'domain': 'd',
                                           'type': 'floto.specs.task.ActivityTask',
                                           'version': '1'}]}
         t = (decider.get_activity_tasks_from_input(d))
@@ -50,8 +51,9 @@ class TestDynamicDecider:
                 
     def test_activity_tasks_from_input_child_workflow(self, decider):
         d = {'copyFiles:1:15fbe8eeaa': ['/path/to/data/2016-03-06.json'],
-             'child_workflow_task': {'activity_tasks': [{'id_': 'fileLength:1:2be88ca424',
+             'child_workflow_task': {'activity_tasks': [{'id_': 'fileLength:1:2be88ca424:d',
                                              'name': 'fileLength',
+                                             'domain': 'd',
                                              'type': 'floto.specs.task.ActivityTask',
                                              'version': '1'}]}}
         t = (decider.get_activity_tasks_from_input(d))

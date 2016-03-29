@@ -10,7 +10,7 @@ class TestStartChildWorkflowExecution():
         assert w.get_attributes()['workflowId'] == 'id'
         
     def test_init_workflow_type(self):
-        workflow_type = floto.api.WorkflowType(name='wft_name', version='wft_version')
+        workflow_type = floto.api.WorkflowType(domain='d', name='wft_name', version='wft_version')
         w = floto.decisions.StartChildWorkflowExecution(workflow_type=workflow_type) 
         assert w.get_attributes()['workflowType'] == {'name':'wft_name', 'version':'wft_version'}
         
@@ -34,7 +34,7 @@ class TestStartChildWorkflowExecution():
 
     def test_property_workflow_type(self):
         w = floto.decisions.StartChildWorkflowExecution() 
-        w.workflow_type = floto.api.WorkflowType(name='n', version='v') 
+        w.workflow_type = floto.api.WorkflowType(domain='d', name='n', version='v')
         assert w.workflow_type == {'name':'n', 'version':'v'} 
 
 

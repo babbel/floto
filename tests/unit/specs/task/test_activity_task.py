@@ -1,9 +1,8 @@
-import pytest
 import floto.specs.task
 
-class TestActivityTask(object):
+class TestActivityTask:
     def test_init(self):
-        t = floto.specs.task.ActivityTask(name='n', version='v', activity_id='a_id', 
+        t = floto.specs.task.ActivityTask(domain='d', name='n', version='v', activity_id='a_id',
                 requires=['t2'], input={'foo':'bar'}, retry_strategy='rs', task_list='tl')
         assert t.name == 'n'
         assert t.version == 'v'
@@ -14,5 +13,5 @@ class TestActivityTask(object):
         assert t.task_list == 'tl'
 
     def test_init_wo_activity_id(self):
-        t = floto.specs.task.ActivityTask(name='n', version='v')
-        assert t.id_ == t._default_id('n', 'v', None)
+        t = floto.specs.task.ActivityTask(domain='d', name='n', version='v')
+        assert t.id_ == t._default_id(domain='d', name='n', version='v', input=None)

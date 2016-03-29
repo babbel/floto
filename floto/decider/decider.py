@@ -37,8 +37,8 @@ class Decider(Base):
         self.decision_builder = None
         if self.decider_spec.activity_tasks:
             activity_tasks = self.decider_spec.activity_tasks
-            self.decision_builder = floto.decider.DecisionBuilder(activity_tasks,
-                    self.default_activity_task_list)
+            self.decision_builder = floto.decider.DecisionBuilder(activity_tasks=activity_tasks,
+                   default_activity_task_list=self.default_activity_task_list)
 
     def get_decisions(self):
         """Heart of the decider logics. Called by floto.decider.Base in each 

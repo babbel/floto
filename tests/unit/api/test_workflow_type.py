@@ -11,9 +11,4 @@ class TestWorkflowType:
         assert w.name == 'n'
         assert w.version == 'v1'
         assert w.description == 'desc'
-
-    def test_init_with_args(self):
-        w = WorkflowType(default_task_list='42', defaultChildPolicy='policy')
-        assert w.default_task_list == '42'
-        assert w.default_child_policy == 'policy'
-
+        assert w.default_child_policy == 'TERMINATE'

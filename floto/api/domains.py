@@ -97,8 +97,8 @@ class Domains(object):
         self._deprecate_domain(name=name)
 
     #############################################################################################
-    #### Private functions interfacing Amazon's SWF service                                   ###
-    #### See http://boto3.readthedocs.org/en/latest/reference/services/swf.html for reference ###
+    # Private functions interfacing Amazon's SWF service                                        #
+    # See http://boto3.readthedocs.org/en/latest/reference/services/swf.html for reference      #
     #############################################################################################
 
     def _domains(self, registration_status):

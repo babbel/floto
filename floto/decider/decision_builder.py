@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 import json
 
 class DecisionBuilder:
-    def __init__(self, activity_tasks, default_activity_task_list):
+    def __init__(self, *, activity_tasks, default_activity_task_list):
         if not activity_tasks:
             raise ValueError("no activity tasks!")
         self.workflow_fail = False
@@ -27,6 +27,7 @@ class DecisionBuilder:
         self._decompress_generator_result = False
 
     def get_decisions(self, history):
+        logger.debug('get_decisons...')
         self._execution_graph = None
         self._set_history(history)
 
@@ -81,7 +82,7 @@ class DecisionBuilder:
         decisions = []
         tasks = self.execution_graph.get_first_tasks()
         for t in tasks:
-            decision = self.get_decision_schedule_activity(t)
+            decision = self.get_decision_schedule_activity(task=t)
             decisions.append(decision)
         return decisions
 
@@ -110,16 +111,16 @@ class DecisionBuilder:
             if t.retry_strategy:
                 failures = self.history.get_number_activity_failures(t)
                 if t.retry_strategy.is_task_resubmitted(failures):
-                    decision = self.get_decision_schedule_activity(t, is_failed_task=True)
+                    decision = self.get_decision_schedule_activity(task=t, is_failed_task=True)
                     decisions.append(decision)
                 else:
                     reason = 'task_retry_limit_reached'
                     details = self.decision_input.get_details_failed_tasks(task_events)
-                    decisions = self.get_decisions_after_failed_workflow_execution(reason, details)
+                    decisions = self.get_decisions_after_failed_workflow_execution(reason=reason, details=details)
             else:
                 reason = 'task_failed'
                 details = self.decision_input.get_details_failed_tasks(task_events)
-                decisions = self.get_decisions_after_failed_workflow_execution(reason, details)
+                decisions = self.get_decisions_after_failed_workflow_execution(reason=reason, details=details)
         return decisions
 
     def get_decisions_after_activity_completion(self, events):
@@ -136,7 +137,7 @@ class DecisionBuilder:
 
         decisions = []
         for t in tasks:
-            decisions.append(self.get_decision_schedule_activity(t))
+            decisions.append(self.get_decision_schedule_activity(task=t))
         return decisions
 
     def get_decisions_decision_failed(self, events_decision_failed):
@@ -144,8 +145,8 @@ class DecisionBuilder:
         for event in events_decision_failed:
             last_event_id = self.history.get_event_attributes(event)['startedEventId']
             first_event_id = self.history.get_id_previous_started(event)
-            builder = floto.decider.DecisionBuilder(copy.deepcopy(self.initial_activity_tasks), 
-                    self.default_activity_task_list)
+            builder = floto.decider.DecisionBuilder(activity_tasks=copy.deepcopy(self.initial_activity_tasks),
+                                                    default_activity_task_list = self.default_activity_task_list)
             builder.first_event_id = first_event_id
             builder.last_event_id = last_event_id
             builder._set_history(self.history)
@@ -158,26 +159,27 @@ class DecisionBuilder:
         self.workflow_complete = True
         return [d]
 
-    def get_decision_schedule_activity(self, task, is_failed_task=False):
+    def get_decision_schedule_activity(self, *, task, is_failed_task=False):
         if isinstance(task, floto.specs.task.ActivityTask):
             input_ = self.decision_input.get_input_task(task, is_failed_task)
-            return self.get_decision_schedule_activity_task(task, input_)
+            return self.get_decision_schedule_activity_task(activity_task=task, input=input_)
         elif isinstance(task, floto.specs.task.ChildWorkflow):
             input_ = self.decision_input.get_input_task(task, is_failed_task)
             return self.get_decision_start_child_workflow_execution(task, input_)
         elif isinstance(task, floto.specs.task.Timer):
-            return self.get_decision_start_timer(task)
+            return self.get_decision_start_timer(timer_task=task)
         else:
             m = 'Do not know how to get decision for task of type: {}'.format(type(task))
             raise ValueError(m)
 
-    def get_decisions_after_failed_workflow_execution(self, reason, details):
+    def get_decisions_after_failed_workflow_execution(self, *, reason, details):
         d = floto.decisions.FailWorkflowExecution(details=details, reason=reason)
         self.workflow_fail = True
         return [d]
 
-    def get_decision_schedule_activity_task(self, activity_task=None, input=None):
-        activity_type = floto.api.ActivityType(name=activity_task.name,
+    def get_decision_schedule_activity_task(self, *, activity_task, input=None):
+        activity_type = floto.api.ActivityType(domain=activity_task.domain,
+                                               name=activity_task.name,
                                                version=activity_task.version)
         task_list = activity_task.task_list or self.default_activity_task_list
         decision = floto.decisions.ScheduleActivityTask(activity_type=activity_type,
@@ -185,13 +187,13 @@ class DecisionBuilder:
                 task_list=task_list, input=input)
         return decision
 
-    def get_decision_start_timer(self, timer_task):
+    def get_decision_start_timer(self, *, timer_task):
         return floto.decisions.StartTimer(timer_id=timer_task.id_,
                                           start_to_fire_timeout=timer_task.delay_in_seconds)
 
     def get_decision_start_child_workflow_execution(self, child_workflow_task=None, input_=None):
         logger.debug('DecisionBuilder.get_decision_start_child_workflow_execution...')
-        workflow_type = floto.api.WorkflowType(name=child_workflow_task.workflow_type_name,
+        workflow_type = floto.api.WorkflowType(domain='d', name=child_workflow_task.workflow_type_name,
                 version=child_workflow_task.workflow_type_version)
         args = {'workflow_id':child_workflow_task.id_,
                 'workflow_type':workflow_type}
@@ -286,7 +288,7 @@ class DecisionBuilder:
         else:
             new_tasks_json = json.dumps(result_generator)
 
-        new_tasks = json.loads(new_tasks_json, object_hook=floto.specs.JSONEncoder.object_hook)
+        new_tasks = json.loads(new_tasks_json, object_hook=floto.specs.JSONEncoder.floto_object_hook)
         self.execution_graph.update(generator, new_tasks)
 
     def _decompress_result(self, compressed_result):

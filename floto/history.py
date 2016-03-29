@@ -1,8 +1,10 @@
 import logging
 
 import floto.api
+import floto.specs.task
 
 logger = logging.getLogger(__name__)
+
 
 class History:
     """History provides information based on the events recorded by SWF during the workflow
@@ -29,7 +31,6 @@ class History:
         self.dt_previous_decision_task = None
         self._read_events_up_to_last_decision(response)
         self.response = response
-
 
     def set_response_properties(self, response):
         self.next_page_token = response['nextPageToken'] if ('nextPageToken' in response) else None
@@ -89,16 +90,16 @@ class History:
         dict: 
             keys: (faulty, completed, decision_failed)
         """
-        types_faulty = ['ActivityTaskFailed', 
-                'ActivityTaskTimedOut',
-                'ChildWorkflowExecutionFailed',
-                'ChildWorkflowExecutionTimedOut',
-                'ChildWorkflowExecutionCanceled',
-                'ChildWorkflowExecutionTerminated']
+        types_faulty = ['ActivityTaskFailed',
+                        'ActivityTaskTimedOut',
+                        'ChildWorkflowExecutionFailed',
+                        'ChildWorkflowExecutionTimedOut',
+                        'ChildWorkflowExecutionCanceled',
+                        'ChildWorkflowExecutionTerminated']
 
-        types_completed = ['ActivityTaskCompleted', 
-                'TimerFired',
-                'ChildWorkflowExecutionCompleted']
+        types_completed = ['ActivityTaskCompleted',
+                           'TimerFired',
+                           'ChildWorkflowExecutionCompleted']
 
         types_decision_failed = ['DecisionTaskTimedOut']
         events = [self.get_event(i) for i in range(first_event_id, last_event_id + 1)]
@@ -119,7 +120,7 @@ class History:
             self._read_next_event_page()
             return self.get_event_by_task_id_and_type(id_, type_)
         return None
-        
+
     def get_event_attributes(self, event):
         """The attributes of an event."""
         event_type = event['eventType']
@@ -139,7 +140,7 @@ class History:
                  'ChildWorkflowExecutionTimedOut': self.get_id_child_workflow_event,
                  'ChildWorkflowExecutionCanceled': self.get_id_child_workflow_event,
                  'ChildWorkflowExecutionTerminated': self.get_id_child_workflow_event,
-                 'StartChildWorkflowExecutionInitiated': 
+                 'StartChildWorkflowExecutionInitiated':
                      self.get_id_start_child_workflow_execution_initiated}
 
         if not event['eventType'] in types:
@@ -211,12 +212,12 @@ class History:
     def get_number_child_workflow_failures(self, id_):
         dt = self.get_datetime_last_event_of_activity(id_, 'ChildWorkflowExecutionCompleted')
         failed_event_types = ['ChildWorkflowExecutionFailed',
-                'ChildWorkflowExecutionTimedOut',
-                'ChildWorkflowExecutionCanceled',
-                'ChildWorkflowExecutionTerminated']
+                              'ChildWorkflowExecutionTimedOut',
+                              'ChildWorkflowExecutionCanceled',
+                              'ChildWorkflowExecutionTerminated']
         failed_events = [self.get_events_by_task_id_and_type(id_, t) for t in failed_event_types]
         failed_events = [e for events in failed_events for e in events]
-        current_failures = [e for e in failed_events if e['eventTimestamp']>dt]
+        current_failures = [e for e in failed_events if e['eventTimestamp'] > dt]
         return len(current_failures)
 
     def get_datetime_previous_decision(self):
@@ -273,7 +274,7 @@ class History:
         if isinstance(task, floto.specs.task.ActivityTask):
             c = self.get_events_by_task_id_and_type(task.id_, 'ActivityTaskCompleted')
         elif isinstance(task, floto.specs.task.ChildWorkflow):
-            c =  self.get_events_by_task_id_and_type(task.id_, 'ChildWorkflowExecutionCompleted')
+            c = self.get_events_by_task_id_and_type(task.id_, 'ChildWorkflowExecutionCompleted')
         else:
             c = None
 
@@ -334,11 +335,11 @@ class History:
         return False
 
     def is_child_workflow_completed(self, workflow_id):
-        initiated = self.get_events_by_task_id_and_type(workflow_id, 
-                'StartChildWorkflowExecutionInitiated')
+        initiated = self.get_events_by_task_id_and_type(workflow_id,
+                                                        'StartChildWorkflowExecutionInitiated')
         if initiated:
-            completed = self.get_events_by_task_id_and_type(workflow_id, 
-                    'ChildWorkflowExecutionCompleted')
+            completed = self.get_events_by_task_id_and_type(workflow_id,
+                                                            'ChildWorkflowExecutionCompleted')
             if completed and completed[0]['eventTimestamp'] > initiated[0]['eventTimestamp']:
                 return True
         elif self._has_next_event_page():
@@ -380,7 +381,8 @@ class History:
             self._fill_events_by_activity_id(events)
 
     def _collect_new_events_for_fill_by_activity_id(self, event_type, max_event_id):
-        logger.debug('History._collect_new_events_for_fill_by_activity_id...{}, max {}'.format(event_type,max_event_id))
+        logger.debug(
+            'History._collect_new_events_for_fill_by_activity_id...{}, max {}'.format(event_type, max_event_id))
         events = []
         if 'none' in self.events_by_activity_id:
             if event_type in self.events_by_activity_id['none']:

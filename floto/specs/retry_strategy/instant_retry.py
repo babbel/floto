@@ -7,3 +7,9 @@ class InstantRetry(Strategy):
 
     def is_task_resubmitted(self, failures):
         return failures <= self.retries
+
+    @classmethod
+    def deserialized(cls, **kwargs):
+        """Construct an instance from a dict of attributes
+        """
+        return cls(**kwargs)

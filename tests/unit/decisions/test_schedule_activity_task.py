@@ -5,11 +5,11 @@ from floto.api import ActivityType
 
 @pytest.fixture(scope='module')
 def activity_type():
-    return ActivityType(name='activity_type_name', version='activity_type_version')
+    return ActivityType(domain='d', name='activity_type_name', version='activity_type_version')
 
 class TestScheduleActivityTask():
     def test_get_decision(self):
-        activity_type = ActivityType(name='at', version='1')
+        activity_type = ActivityType(domain='d', name='at', version='1')
         d = ScheduleActivityTask(activity_id='do_it', activity_type=activity_type)
         decision_dict = d.get_decision()
         decision_attributes = decision_dict['scheduleActivityTaskDecisionAttributes']
@@ -19,7 +19,7 @@ class TestScheduleActivityTask():
         assert decision_attributes['activityId'] == d.activity_id
 
     def test_decision_attribute_default_activity_id(self):
-        activity_type = ActivityType(name='at', version='1')
+        activity_type = ActivityType(domain='d', name='at', version='1')
         d = ScheduleActivityTask(activity_type=activity_type)
         activity_id = activity_type.name + '_' + activity_type.version
         assert d.decision_attributes()['activityId'] == activity_id 
@@ -43,7 +43,7 @@ class TestScheduleActivityTask():
             d.assert_required_fields(dictionary, ['key', 'key.key2'])
 
     def test_decision_attributes_with_input(self):
-        activity_type = ActivityType(name='at', version='1')
+        activity_type = ActivityType(domain='d', name='at', version='1')
         d = ScheduleActivityTask(activity_type=activity_type)
         d.input={'foo':'bar'}
         assert json.loads(d.decision_attributes()['input'])['foo'] == 'bar'
@@ -54,7 +54,7 @@ class TestScheduleActivityTask():
             d.decision_attributes()
 
     def test_decision_attributes_with_input_in_init(self):
-        activity_type = ActivityType(name='at', version='1')
+        activity_type = ActivityType(domain='d', name='at', version='1')
         d = ScheduleActivityTask(activity_type=activity_type, input={'foo':'bar'})
         assert json.loads(d.decision_attributes()['input'])['foo'] == 'bar'
 

@@ -14,7 +14,7 @@ class ActivityWorker:
     """The worker which performs the activities.
     Usage:
     -----
-    @floto.activity(name='my_activity', version='v1')
+    @floto.activity(domain='my_domain', name='my_activity', version='v1')
     def activity1(context):
         # Do work
         return {'my':'result'}
@@ -23,16 +23,16 @@ class ActivityWorker:
     my_activity_worker.run()
     """
 
-    def __init__(self, swf=None, task_list=None, domain=None, task_heartbeat_in_seconds=None, 
+    def __init__(self, *, domain, task_list, swf=None, task_heartbeat_in_seconds=None,
             identity=None):
         """
         Parameters
         ----------
-        swf: Optional[floto.api.Swf]
-            If None a new instance is initiated
+        domain: str
         task_list: str
             The task_list of the activity worker
-        domain: str
+        swf: Optional[floto.api.Swf]
+            If None a new instance is initiated
         task_heartbeat_in_seconds: Optional[int]
             Heartbeats are sent every <task_heartbeat_in_seconds> to SWF during the execution. If
             set to 0 no heartbeats will be sent. Default is 120.
@@ -79,7 +79,7 @@ class ActivityWorker:
             if self.task_token:
                 activity_type_name = self.last_response['activityType']['name']
                 activity_type_version = self.last_response['activityType']['version']
-                function_id = activity_type_name + ':' + activity_type_version
+                function_id = activity_type_name + ':' + activity_type_version + ':' + self.domain
                 context = self.get_context()
                 try:
                     if function_id in floto.ACTIVITY_FUNCTIONS:
