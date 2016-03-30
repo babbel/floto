@@ -1,6 +1,5 @@
 from floto.specs.retry_strategy import Strategy
 
-
 class InstantRetry(Strategy):
     def __init__(self, retries=None):
         self.retries = retries
@@ -10,6 +9,13 @@ class InstantRetry(Strategy):
 
     @classmethod
     def deserialized(cls, **kwargs):
-        """Construct an instance from a dict of attributes
-        """
-        return cls(**kwargs)
+        cpy = {k:v for k,v in kwargs.items() if not 'type' in k}
+        obj = None
+        try:
+            obj = cls(**cpy)
+        except TypeError:
+            msg = 'Can not create instance of {} with arguments {}'.format(cls.__name__, kwargs)
+            logger.error(msg)
+            raise TypeError(msg)
+        return obj
+

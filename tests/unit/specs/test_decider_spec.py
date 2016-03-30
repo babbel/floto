@@ -17,21 +17,10 @@ class TestDeciderSpec:
         assert d.repeat_workflow is True
 
     def test_to_json(self):
-        d = floto.specs.DeciderSpec(domain='d', task_list='tl', activity_tasks=['t1'])
-        j = d.to_json()
-        assert j == json.dumps({'type': 'floto.specs.DeciderSpec',
-                                'domain': 'd',
-                                'activity_tasks': ['t1'],
-                                'task_list': 'tl',
-                                'repeat_workflow': False,
-                                'terminate_decider_after_completion': False},
-                               sort_keys=True)
-
-    def test_to_json_default_activity_task_list(self):
-        d = floto.specs.DeciderSpec(domain='d', activity_tasks=['t1'], task_list='tl',
-                                    default_activity_task_list='atl')
+        task = floto.specs.task.ActivityTask(domain='d', name='n', version='1')
+        d = floto.specs.DeciderSpec(domain='d', task_list='tl', activity_tasks=[task])
         j = json.loads(d.to_json())
-        assert j['default_activity_task_list'] == 'atl'
+        assert j == d.serializable()
 
     def test_from_json(self):
         json_dict = {'type': 'floto.specs.DeciderSpec',

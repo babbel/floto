@@ -4,7 +4,7 @@ import time
 import floto
 
 
-@floto.activity(name='activity1', version='v5')
+@floto.activity(domain='floto_test', name='activity1', version='v5')
 def activity1(context):
     print('activity1_v5 started' + 20 * '.')
     result = {'workflow': context['workflow'],
@@ -13,7 +13,7 @@ def activity1(context):
     print('activity1_v5 finished' + 20 * '.')
     return result
 
-@floto.activity(name='activity2', version='v4')
+@floto.activity(domain='floto_test', name='activity2', version='v4')
 def activity2():
     print('activity2 started' + 20 * '.')
     result = {'status': 'finished'}
@@ -22,7 +22,7 @@ def activity2():
     return result
 
 
-@floto.activity(name='activity3', version='v2')
+@floto.activity(domain='floto_test', name='activity3', version='v2')
 def activity3(context):
     print('activity3 started' + 20 * '.')
     activity1_result = [v for k, v in context.items() if 'activity1' in k][0]
@@ -35,7 +35,7 @@ def activity3(context):
 FAILURE_COUNT_1 = 0
 
 
-@floto.activity(name='activity_fails_3', version='v2')
+@floto.activity(domain='floto_test', name='activity_fails_3', version='v2')
 def activity_fails_3(context):
     print('activity_fails_3 started' + 20 * '.')
     global FAILURE_COUNT_1
@@ -54,7 +54,7 @@ def activity_fails_3(context):
 FAILURE_COUNT_2 = 0
 
 
-@floto.activity(name='activity_fails_2', version='v2')
+@floto.activity(domain='floto_test', name='activity_fails_2', version='v2')
 def activity_fails_2():
     print('activity_fails_2 started' + 20 * '.')
     global FAILURE_COUNT_2
@@ -64,14 +64,14 @@ def activity_fails_2():
     raise Exception('Something went wrong')
 
 
-@floto.activity(name='activity4', version='v2')
+@floto.activity(domain='floto_test', name='activity4', version='v2')
 def activity_4(context):
     print('activity_4 started' + 20 * '.')
     print('activity_4 finished' + 20 * '.')
     return context
 
 
-@floto.activity(name='activity5', version='v2')
+@floto.activity(domain='floto_test', name='activity5', version='v2')
 def activity_5():
     print('activity_5 started' + 20 * '.')
     print('Sleeping for 30s.')
@@ -79,7 +79,7 @@ def activity_5():
     print('activity_5 finished' + 20 * '.')
     return {'status':'finished'}
 
-@floto.generator(name='generator1', version='v1')
+@floto.generator(domain='floto_test', name='generator1', version='v1')
 def generator1():
     print('generator_1 started' + 20 * '.')
     rs = floto.specs.retry_strategy.InstantRetry(retries=2)
@@ -90,7 +90,7 @@ def generator1():
     print('generator_1 finished' + 20 * '.')
     return [task_1, task_2]
 
-@floto.activity(name='activity6', version='v1')
+@floto.activity(domain='floto_test', name='activity6', version='v1')
 def activity_6(context):
     print('activity_6 started' + 20 * '.')
     time.sleep(7)

@@ -2,11 +2,12 @@ import json
 import logging
 
 import floto.specs
+from floto.specs import JSONSerializable
 
 logger = logging.getLogger(__name__)
 
 
-class DeciderSpec:
+class DeciderSpec(JSONSerializable):
     """Specification of a decider. Objects of this class define the execution logic of
     floto.decider.Deciders"""
 
@@ -34,19 +35,32 @@ class DeciderSpec:
         self.terminate_decider_after_completion = terminate_decider_after_completion
 
     @classmethod
-    def deserialized(cls, **kwargs):
+    def _deserialized(cls, **kwargs):
         """Construct an instance from a dict of attributes
         """
-        # Remove 'type' key, just in case there still is one
-        kwargs.pop('type', None)
-        return cls(**kwargs)
+        # TODO test
+        cpy = cls._get_copy_wo_type(kwargs)
 
-    @staticmethod
-    def from_json(json_str):
+        if cpy.get('activity_tasks'):
+            tasks = [floto.specs.task.Task.deserialized(**t) for t in cpy['activity_tasks']]
+            cpy['activity_tasks'] = tasks
+
+        return cls._instantiate(**cpy)
+
+    def serializable(self):
+        cpy = super().serializable()
+        if cpy.get('activity_tasks'):
+            tasks = [t.serializable() for t in cpy['activity_tasks']]
+            cpy['activity_tasks'] = tasks
+        return cpy
+
+    @classmethod
+    def from_json(cls, json_str):
         logger.debug('from json: {}'.format(json_str))
-        return json.loads(json_str, object_hook=floto.specs.JSONEncoder.floto_object_hook)
+        json_dict =  json.loads(json_str)
+        return cls.deserialized(**json_dict)
 
     def to_json(self):
-        json_str = json.dumps(self, cls=floto.specs.JSONEncoder, sort_keys=True)
+        json_str = json.dumps(self.serializable(), sort_keys=True)
         logger.debug('to_json: {}'.format(json_str))
         return json_str

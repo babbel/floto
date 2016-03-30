@@ -42,14 +42,17 @@ class ChildWorkflow(Task):
         self.id_ = workflow_id or default_id
 
     @classmethod
-    def deserialized(cls, **kwargs):
+    def _deserialized(cls, **kwargs):
         """Construct an instance from a dict of attributes
 
         Notes
         -----
         Note that the parameter `workflow_id` is assigned to the attribute `id_ `
         """
-        kwargs['workflow_id'] = kwargs.pop('id_', None)
-        # Remove 'type' key, just in case there still is one
-        kwargs.pop('type', None)
-        return cls(**kwargs)
+        cpy = cls._get_copy_wo_type(kwargs)
+        cpy['workflow_id'] = cpy.pop('id_', None)
+
+        if cpy.get('retry_strategy'):
+            rs = floto.specs.retry_strategy.Strategy.deserialized(**cpy['retry_strategy'])
+            cpy['retry_strategy'] = rs
+        return cls(**cpy)

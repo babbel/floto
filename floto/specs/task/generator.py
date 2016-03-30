@@ -10,6 +10,7 @@ class Generator(ActivityTask):
         super().__init__(domain=domain, name=name, version=version, activity_id=activity_id, requires=requires,
                          input=input, retry_strategy=retry_strategy)
 
+    # TODO remove: Generator inherits from ActivityTask
     @classmethod
     def deserialized(cls, **kwargs):
         """Construct an instance from a dict of attributes

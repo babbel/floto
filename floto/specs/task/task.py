@@ -2,11 +2,12 @@ import hashlib
 import logging
 
 import floto.specs
+from floto.specs import JSONSerializable
 
 logger = logging.getLogger(__name__)
 
 
-class Task:
+class Task(JSONSerializable):
     """Base class for tasks, e.g. ActivityTask, Timer.
 
     Parameters
@@ -31,6 +32,7 @@ class Task:
         str
 
         """
+        # TODO change
         input_string = floto.specs.JSONEncoder.dump_object(input)
 
         if self.requires:
@@ -48,16 +50,16 @@ class Task:
         -------
         dict
         """
-        # remove None values
-        cpy = {k: v for k, v in self.__dict__.items() if v is not None}
-
-        # add type
-        module_name = '.'.join(self.__module__.split('.')[:-1])
-        cpy['type'] = module_name + '.' + self.__class__.__name__
+        cpy = super().serializable()
 
         # in the requires list, we need nothing but the task's id_
         requires = cpy.get('requires')
         if requires:
-            cpy['requires'] = [{'id_': t.id_} for t in requires]
+            cpy['requires'] = []
+            for task in requires:
+                task_serializable = task.serializable()
+                cpy['requires'].append({'id_':task_serializable['id_'], 
+                                        'type':task_serializable['type']})
+
         logger.debug('serialized {}'.format(cpy))
         return cpy
