@@ -7,3 +7,4 @@ class InstantRetry(Strategy):
     def is_task_resubmitted(self, failures):
         return failures <= self.retries
 
+

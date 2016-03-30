@@ -41,6 +41,16 @@ class ChildWorkflow(Task):
                                       version=workflow_type_version, input=input)
         self.id_ = workflow_id or default_id
 
+    def serializable(self):
+        cpy = super().serializable()
+
+        retry_strategy = cpy.get('retry_strategy')
+        if retry_strategy:
+            cpy['retry_strategy'] = retry_strategy.serializable()
+
+        logger.debug('serialized ActivityTask: {}'.format(cpy))
+        return cpy
+
     @classmethod
     def _deserialized(cls, **kwargs):
         """Construct an instance from a dict of attributes
@@ -49,7 +59,7 @@ class ChildWorkflow(Task):
         -----
         Note that the parameter `workflow_id` is assigned to the attribute `id_ `
         """
-        cpy = cls._get_copy_wo_type(kwargs)
+        cpy = floto.specs.serializer.copy_args_wo_type(kwargs)
         cpy['workflow_id'] = cpy.pop('id_', None)
 
         if cpy.get('retry_strategy'):

@@ -61,11 +61,10 @@ class ActivityTask(Task):
         >>> obj = cls.deserialized(**attrs)
 
         """
-        cpy = cls._get_copy_wo_type(kwargs)
+        cpy = floto.specs.serializer.copy_args_wo_type(kwargs)
         cpy['activity_id'] = cpy.pop('id_', None)
 
         if cpy.get('retry_strategy'):
             rs = floto.specs.retry_strategy.Strategy.deserialized(**cpy['retry_strategy'])
             cpy['retry_strategy'] = rs
-
         return cls(**cpy)

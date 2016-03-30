@@ -1,13 +1,14 @@
-import hashlib
 import logging
+import hashlib
+import json
 
 import floto.specs
-from floto.specs import JSONSerializable
+import floto.specs.serializer
 
 logger = logging.getLogger(__name__)
 
 
-class Task(JSONSerializable):
+class Task:
     """Base class for tasks, e.g. ActivityTask, Timer.
 
     Parameters
@@ -33,7 +34,7 @@ class Task(JSONSerializable):
 
         """
         # TODO change
-        input_string = floto.specs.JSONEncoder.dump_object(input)
+        input_string = json.dumps(input, sort_keys=True) 
 
         if self.requires:
             requires_string = ''.join([t.id_ for t in self.requires])
@@ -50,7 +51,8 @@ class Task(JSONSerializable):
         -------
         dict
         """
-        cpy = super().serializable()
+        class_path = floto.specs.serializer.class_path(self)
+        cpy = floto.specs.serializer.serializable(self.__dict__, class_path)
 
         # in the requires list, we need nothing but the task's id_
         requires = cpy.get('requires')
@@ -63,3 +65,16 @@ class Task(JSONSerializable):
 
         logger.debug('serialized {}'.format(cpy))
         return cpy
+
+    @staticmethod
+    def deserialized(**kwargs):
+        if not 'type' in kwargs:
+            raise ValueError('No type provided for deserialization')
+
+        cls = floto.specs.serializer.get_class(kwargs['type']) 
+        return cls._deserialized(**kwargs)
+    
+    @classmethod
+    def _deserialized(cls, **kwargs):
+        cpy = floto.specs.serializer.copy_args_wo_type(kwargs)
+        return cls(**cpy)

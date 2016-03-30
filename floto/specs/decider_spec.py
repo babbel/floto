@@ -2,12 +2,12 @@ import json
 import logging
 
 import floto.specs
-from floto.specs import JSONSerializable
+import floto.specs.serializer
 
 logger = logging.getLogger(__name__)
 
 
-class DeciderSpec(JSONSerializable):
+class DeciderSpec:
     """Specification of a decider. Objects of this class define the execution logic of
     floto.decider.Deciders"""
 
@@ -34,25 +34,25 @@ class DeciderSpec(JSONSerializable):
         self.repeat_workflow = repeat_workflow
         self.terminate_decider_after_completion = terminate_decider_after_completion
 
-    @classmethod
-    def _deserialized(cls, **kwargs):
-        """Construct an instance from a dict of attributes
-        """
-        # TODO test
-        cpy = cls._get_copy_wo_type(kwargs)
-
-        if cpy.get('activity_tasks'):
-            tasks = [floto.specs.task.Task.deserialized(**t) for t in cpy['activity_tasks']]
-            cpy['activity_tasks'] = tasks
-
-        return cls._instantiate(**cpy)
-
     def serializable(self):
-        cpy = super().serializable()
+        class_path = floto.specs.serializer.class_path(self)
+        cpy = floto.specs.serializer.serializable(self.__dict__, class_path)
+
         if cpy.get('activity_tasks'):
             tasks = [t.serializable() for t in cpy['activity_tasks']]
             cpy['activity_tasks'] = tasks
         return cpy
+
+    @classmethod
+    def deserialized(cls, **kwargs):
+        """Construct an instance from a dict of attributes
+        """
+        # TODO test
+        cpy = floto.specs.serializer.copy_args_wo_type(kwargs)
+        if cpy.get('activity_tasks'):
+            tasks = [floto.specs.task.Task.deserialized(**t) for t in cpy['activity_tasks']]
+            cpy['activity_tasks'] = tasks
+        return cls(**cpy)
 
     @classmethod
     def from_json(cls, json_str):

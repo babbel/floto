@@ -30,7 +30,4 @@ class TestActivityTask:
         s = task.serializable()
         assert s['retry_strategy']['retries'] == 3
 
-    def test_deserialize(self):
-        s = task.serializable()
-
 
