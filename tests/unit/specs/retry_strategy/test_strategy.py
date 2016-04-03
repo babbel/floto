@@ -12,9 +12,8 @@ class TestRetry(object):
         j = floto.specs.retry_strategy.Strategy().serializable()
         assert j['type'] == 'floto.specs.retry_strategy.Strategy'
 
-    def test_deserialize(self):
-        j = floto.specs.retry_strategy.Strategy().serializable()
-        s = floto.specs.retry_strategy.Strategy.deserialized(**j)
+    def test_deserialized(self):
+        s = floto.specs.retry_strategy.Strategy.deserialized()
         assert isinstance(s, floto.specs.retry_strategy.Strategy)
 
 

@@ -24,6 +24,7 @@ class DynamicDecider(Decider):
                 tasks = None
                 if k == 'activity_tasks':
                     tasks_json = json.dumps(v)
+                    # TODO Deserialize properly
                     tasks = json.loads(tasks_json, object_hook=floto.specs.JSONEncoder.floto_object_hook)
                 else:
                     tasks = self.get_activity_tasks_from_input(v)

@@ -9,10 +9,10 @@ def class_path(obj):
     module_name = '.'.join(obj.__module__.split('.')[:-1])
     return module_name + '.' + obj.__class__.__name__
 
-def serializable(object_namespace, class_path):
-    cpy = dict_to_ordered_dict(object_namespace)
+def ordered_dict_with_type(dict_, class_path, filter_none=True):
+    cpy = {k:v for k,v in dict_.items() if (not filter_none) or (v is not None)}
     cpy['type'] = class_path
-    return cpy
+    return dict_to_ordered_dict(cpy)
 
 def get_class(class_path):
     parts = class_path.split('.')
@@ -20,15 +20,19 @@ def get_class(class_path):
     class_name = parts[-1]
     return getattr(sys.modules[module_name], class_name)
 
-def copy_args_wo_type(kwargs):
-    kwargs = {k:v for k,v in kwargs.items() if not 'type' in k}
-    logger.debug('Copied kwargs {}:'.format(kwargs))
-    return kwargs
+# TODO test
+def copy_dict(dict_, filter_keys=[]):
+    """Returns copy of dict_, removes (key, value) if value == None or key is in filter_keys.
+    """
+    new_dict = {k:v for k,v in dict_.items() if (v is not None) and (not k in filter_keys)}
+    logger.debug('Copied dict {}:'.format(new_dict))
+    return new_dict
 
+# TODO: dict_.keys().. keeps None values. Desired behavior?
 def dict_to_ordered_dict(dict_):
     d = OrderedDict.fromkeys(sorted(dict_.keys()))
     for attr, value in sorted(dict_.items()):
-        if value:
+        if value is not None:
             d.update({attr: value})
     return d
 

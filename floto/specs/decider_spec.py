@@ -36,11 +36,12 @@ class DeciderSpec:
 
     def serializable(self):
         class_path = floto.specs.serializer.class_path(self)
-        cpy = floto.specs.serializer.serializable(self.__dict__, class_path)
+        cpy = floto.specs.serializer.ordered_dict_with_type(self.__dict__, class_path)
 
         if cpy.get('activity_tasks'):
             tasks = [t.serializable() for t in cpy['activity_tasks']]
             cpy['activity_tasks'] = tasks
+        logger.debug('Serialized DeciderSpec: {}'.format(cpy))
         return cpy
 
     @classmethod
@@ -48,10 +49,14 @@ class DeciderSpec:
         """Construct an instance from a dict of attributes
         """
         # TODO test
-        cpy = floto.specs.serializer.copy_args_wo_type(kwargs)
+        cpy = floto.specs.serializer.copy_dict(kwargs, filter_keys=['type'])
         if cpy.get('activity_tasks'):
-            tasks = [floto.specs.task.Task.deserialized(**t) for t in cpy['activity_tasks']]
+            tasks = []
+            for t in cpy['activity_tasks']:
+                task = floto.specs.serializer.get_class(t['type'])
+                tasks.append(task.deserialized(**t))
             cpy['activity_tasks'] = tasks
+        logger.debug('Deserialize DeciderSpec with: {}'.format(cpy))
         return cls(**cpy)
 
     @classmethod

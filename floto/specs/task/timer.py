@@ -10,8 +10,8 @@ class Timer(Task):
         ----------
         id_: str
             The unique id of the timer task
-        requires: Optional[list[<floto.specs.task>]]
-            List of other tasks on which this timer depends on when the workflow is executed
+        requires: Optional[list[str]]
+            List of other task ids this timer depends on when the workflow is executed
         delay_in_seconds: int
         """
         super().__init__(id_=id_, requires=requires)

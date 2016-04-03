@@ -8,14 +8,9 @@ class TestInstantRetry(object):
         assert not s.is_task_resubmitted(failures=3)
 
     def test_deserialized(self):
-        j = floto.specs.retry_strategy.InstantRetry(retries=3).serializable()
+        j = {'type':'floto.specs.retry_strategy.InstantRetry',
+             'retries':3}
         s = floto.specs.retry_strategy.InstantRetry.deserialized(**j)
-        assert isinstance(s, floto.specs.retry_strategy.InstantRetry)
-        assert s.retries == 3
-
-    def test_deserialized_with_mother_class(self):
-        j = floto.specs.retry_strategy.InstantRetry(retries=3).serializable()
-        s = floto.specs.retry_strategy.Strategy.deserialized(**j)
         assert isinstance(s, floto.specs.retry_strategy.InstantRetry)
         assert s.retries == 3
 

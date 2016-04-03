@@ -24,10 +24,7 @@ class Decider(Base):
             self.decider_spec = floto.specs.DeciderSpec.from_json(decider_spec)
         else:
             self.decider_spec = decider_spec
-
-        if not (self.decider_spec.domain and self.decider_spec.task_list):
-            raise ValueError('Domain or task_list missing in decider spec')
-
+        
         self.task_list = self.decider_spec.task_list
         self.domain = self.decider_spec.domain
 

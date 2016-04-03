@@ -1,10 +1,14 @@
-from floto.specs.task import Task
+import logging
 
+from floto.specs.task import Task
+import floto.specs.retry_strategy
+
+logger = logging.getLogger(__name__)
 
 class ChildWorkflow(Task):
     """ChildWorkflow task spec."""
 
-    def __init__(self, *, domain, workflow_type_name, workflow_type_version, workflow_id=None,
+    def __init__(self, *, domain, workflow_type_name, workflow_type_version, id_=None,
                  requires=None, input=None, task_list=None, retry_strategy=None):
         """Defines a child workflow which is scheduled as part of a decider execution logic and
         used in decider specs.
@@ -15,7 +19,7 @@ class ChildWorkflow(Task):
             The name of the workflow type to be scheduled
         workflow_type_version: str
             The version of the workflow type to be scheduled
-        workflow_id: Optional[str]
+        id_: Optional[str]
             The id of the workflow. 
             Defaults to <workflow_type_name>:<workflow_type_version>:hash(input/requires)
         requires: Optional[list]
@@ -29,6 +33,8 @@ class ChildWorkflow(Task):
             The strategy which defines the repeated execution strategy.
         """
         super().__init__(requires=requires)
+        if retry_strategy and not isinstance(retry_strategy, floto.specs.retry_strategy.Strategy):
+            raise ValueError('Retry strategy must be of type floto.specs.retry_strategy.Strategy')
 
         self.domain = domain
         self.workflow_type_name = workflow_type_name
@@ -39,7 +45,7 @@ class ChildWorkflow(Task):
 
         default_id = self._default_id(domain=domain, name=workflow_type_name,
                                       version=workflow_type_version, input=input)
-        self.id_ = workflow_id or default_id
+        self.id_ = id_ or default_id
 
     def serializable(self):
         cpy = super().serializable()
@@ -48,21 +54,15 @@ class ChildWorkflow(Task):
         if retry_strategy:
             cpy['retry_strategy'] = retry_strategy.serializable()
 
-        logger.debug('serialized ActivityTask: {}'.format(cpy))
+        logger.debug('Serialized ChildWorkflow: {}'.format(cpy))
         return cpy
 
     @classmethod
-    def _deserialized(cls, **kwargs):
+    def deserialized(cls, **kwargs):
         """Construct an instance from a dict of attributes
-
-        Notes
-        -----
-        Note that the parameter `workflow_id` is assigned to the attribute `id_ `
         """
-        cpy = floto.specs.serializer.copy_args_wo_type(kwargs)
-        cpy['workflow_id'] = cpy.pop('id_', None)
-
+        cpy = floto.specs.serializer.copy_dict(kwargs, ['type'])
         if cpy.get('retry_strategy'):
-            rs = floto.specs.retry_strategy.Strategy.deserialized(**cpy['retry_strategy'])
-            cpy['retry_strategy'] = rs
+            rs = floto.specs.serializer.get_class(cpy['retry_strategy']['type'])
+            cpy['retry_strategy'] = rs.deserialized(**cpy['retry_strategy'])
         return cls(**cpy)

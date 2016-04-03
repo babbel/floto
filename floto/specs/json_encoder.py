@@ -49,3 +49,4 @@ class JSONEncoder(json.JSONEncoder):
         else:
             j = json.dumps(obj, cls=floto.specs.JSONEncoder, sort_keys=True)
         return j
+
