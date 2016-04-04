@@ -1,13 +1,14 @@
 import json
+import logging
 
 from floto.decisions import Decision
-import logging
 
 logger = logging.getLogger(__name__)
 
+
 class CompleteWorkflowExecution(Decision):
     def __init__(self, result=None):
-        self.required_fields = ['decisionType']
+        super().__init__(required_fields=['decisionType'])
         self.result = result
 
     def _get_decision(self):
