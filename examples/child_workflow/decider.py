@@ -7,14 +7,19 @@ import floto.decider
 logger = logging.getLogger(__name__)
 
 rs = floto.specs.retry_strategy.InstantRetry(retries=3)
+domain = 'floto_test'
 
 #Define tasks and decider of the workflow
-copy_files = ActivityTask(name='copyFiles', version='1', retry_strategy=rs)
+copy_files = ActivityTask(domain=domain, name='copyFiles', version='1', retry_strategy=rs)
 
-child_workflow = ChildWorkflow(workflow_type_name='s3_files_example', workflow_type_version='1',
-        requires=[copy_files], task_list='file_length_task_list', retry_strategy=rs)
+child_workflow = ChildWorkflow(domain=domain, 
+                               workflow_type_name='s3_files_example', 
+                               workflow_type_version='1', 
+                               requires=[copy_files.id_], 
+                               task_list='file_length_task_list', 
+                               retry_strategy=rs)
 
-decider_spec = DeciderSpec(domain='floto_test',
+decider_spec = DeciderSpec(domain=domain,
                            task_list='copy_files_task_list',
                            default_activity_task_list='s3_files_worker',
                            activity_tasks=[copy_files, child_workflow],
@@ -25,9 +30,9 @@ decider.run(separate_process=True)
 
 
 # Define tasks and decider of the child workflow
-file_length = ActivityTask(name='fileLength', version='1', retry_strategy=rs)
+file_length = ActivityTask(domain=domain, name='fileLength', version='1', retry_strategy=rs)
 
-child_workflow_spec = DeciderSpec(domain='floto_test',
+child_workflow_spec = DeciderSpec(domain=domain,
                            task_list='file_length_task_list',
                            default_activity_task_list='s3_files_worker',
                            activity_tasks=[file_length],

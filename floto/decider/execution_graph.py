@@ -1,177 +1,70 @@
 import logging
-import floto
-
 logger = logging.getLogger(__name__)
 
 class ExecutionGraph:
-    def __init__(self, activity_tasks=None):
-        self.tasks = activity_tasks
+    def __init__(self):
+        self.ingoing_vertices = {}
+        self.outgoing_vertices = {}
 
-        self._id_to_idx = None
-        self._idx_to_id = None
-        self._ids = None
-        self._tasks_by_id = None
-
-        self.graph_matrix = None
-
-    @property
-    def graph(self):
-        if not self.graph_matrix:
-            self.graph_matrix = self.graph_from_task_specs()
-        return self.graph_matrix
-
-    @property
-    def id_to_idx(self):
-        if not self._id_to_idx:
-            self.generate_indices()
-        return self._id_to_idx
-
-    @property
-    def idx_to_id(self):
-        if not self._idx_to_id:
-            self.generate_indices()
-        return self._idx_to_id
-
-    @property
-    def ids(self):
-        if not self._ids:
-            self.generate_indices()
-        return self._ids
-
-    @property
-    def tasks_by_id(self):
-        if not self._tasks_by_id:
-            self.generate_indices()
-        return self._tasks_by_id
-
-    def task_by_idx(self, idx):
-        return self.tasks_by_id[self.idx_to_id[idx]]
-
-    def generate_indices(self):
-        self._id_to_idx = {}
-        self._idx_to_id = {}
-        self._ids = []
-        self._tasks_by_id = {}
-        idx = 0
-        for t in self.tasks:
-            if not t.id_ in self._id_to_idx:
-                self._id_to_idx[t.id_] = idx
-                self._idx_to_id[idx] = t.id_
-                self._ids.append(t.id_)
-                self._tasks_by_id[t.id_] = t
-                idx += 1
-            else:
-                message = 'You must not use the same task ID twice in your decider_spec'
-                raise ValueError(message)
-
-    def graph_from_task_specs(self):
-        """First index depends on second index:
-        m[id_1][id_2] == 1 => 2 depends on 1
-        """
-        matrix = [[0] * len(self.id_to_idx) for i in range(len(self.id_to_idx))]
-        for t in self.tasks:
-            if t.requires:
-                for required_task in t.requires:
-                    index_task = self.id_to_idx[t.id_]
-                    index_required_task = self.id_to_idx[required_task.id_]
-                    matrix[index_required_task][index_task] = 1
-        matrix = self.transitive_reduction(matrix)
-        return matrix
-
-    def transitive_reduction(self, graph):
-        size = len(graph)
-        for j in range(size):
-            for i in range(size):
-                if graph[i][j]:
-                    for k in range(size):
-                        if graph[j][k]:
-                            graph[i][k] = 0
-        return graph
-
-    def get_first_tasks(self):
-        first_tasks_ids = []
-        for task_id in self.ids:
-            column = self._get_column_of_graph_matrix(task_id)
-            if all(e == 0 for e in column):
-                first_tasks_ids.append(task_id)
-
-        first_tasks = []
-        for task_id in first_tasks_ids:
-            first_tasks.append(self.tasks_by_id[task_id])
-        return first_tasks
-
-    def get_depending_tasks(self, id_):
-        completed_activity_idx = self.id_to_idx[id_]
-        tasks_indices = [idx for idx, val in enumerate(self.graph[completed_activity_idx]) if val]
-        tasks_ids = [self.idx_to_id[idx] for idx in tasks_indices]
-        tasks = [self.tasks_by_id[id_] for id_ in tasks_ids]
-        return tasks
-
-    def get_dependencies(self, id_):
-        activity_task = self.tasks_by_id[id_]
-        if activity_task.requires:
-            return activity_task.requires
+    def add_task(self, id_):
+        """Adds task id as node to the graph."""
+        if not id_ in self.outgoing_vertices:
+            self.outgoing_vertices[id_] = set()
+            self.ingoing_vertices[id_] = set()
         else:
-            return []
+            raise ValueError('Task with id {} already exists in graph.'.format(id_))
 
-    def outgoing_vertices(self):
-        """Activity ids of the outgoing vertices, i.e. activity tasks which do not have depending
-        tasks
+    def add_dependencies(self, id_, dependencies):
+        """Adds the dependencies of task with id_ to the graph."""
+        if not id_ in self.ingoing_vertices:
+            raise ValueError('No node {} in graph'.format(id_))
 
-        Returns
-        -------
-        list: str
-             Activity ids
+        self.ingoing_vertices[id_].update(set(dependencies))
+
+        for d in dependencies:
+            if not d in self.outgoing_vertices:
+                raise ValueError('No node {} in graph'.format(id_))
+            self.outgoing_vertices[d].add(id_)
+
+    def get_requires(self, id_):
+        """Returns the set ids of required task."""
+        if not id_ in self.ingoing_vertices:
+            raise ValueError('No node {} in graph'.format(id_))
+
+        return self.ingoing_vertices[id_]
+
+    def get_depending(self, id_):
+        """Returns the set of ids of tasks which require the task with id_."""
+        if not id_ in self.outgoing_vertices:
+            raise ValueError('No node {} in graph'.format(id_))
+        return self.outgoing_vertices[id_]
+
+    def get_outgoing_nodes(self):
+        return [node for node,vertices in self.outgoing_vertices.items() if not vertices]
+
+    def get_nodes_zero_in_degree(self):
+        return [node for node,vertices in self.ingoing_vertices.items() if not vertices]
+
+    def is_acyclic(self):
+        """Returns True if graph does not have cycles.
+        Implementation of Kahn's algorithm for cycle check O(n):
+        https://en.wikipedia.org/wiki/Topological_sorting
         """
-        outgoing = []
-        for idx, row in enumerate(self.graph):
-            if all(e == 0 for e in row):
-                outgoing.append(self.task_by_idx(idx))
-        return outgoing
+        in_degrees = {k:len(v) for k,v in self.ingoing_vertices.items()}
+        nodes_zero_in_degree = set(self.get_nodes_zero_in_degree())
 
-    def update(self, generator_task, new_tasks):
-        """Updates the list of tasks with <new_tasks> generated by <generator_tasks> which define 
-        the execution graph. The dependencies of all tasks are updated accordingly.
-        """
-        generator_depending_tasks = self.get_depending_tasks(generator_task.id_)
-        for d in generator_depending_tasks:
-            dependencies = self._remove_dependency(d.requires, generator_task)
-            dependencies.extend(new_tasks)
-            d.requires = dependencies
+        number_nodes_zero_in_degree = 0 
+         
+        while nodes_zero_in_degree:                
+            u = nodes_zero_in_degree.pop()
+            number_nodes_zero_in_degree += 1 
+            for v in self.outgoing_vertices[u]:
+                in_degrees[v] -= 1
+                if in_degrees[v] == 0:
+                    nodes_zero_in_degree.add(v)
+       
+        logger.debug('Graph cycle check: Number of sorted nodes: {}. Number of nodes in graph: {}'.
+                format(number_nodes_zero_in_degree, len(self.outgoing_vertices)))
 
-        for t in new_tasks:
-            if t.requires:
-                t.requires.extend([generator_task])
-            else:
-                t.requires = [generator_task]
-
-        ids_independent_tasks = set(self.ids) - set([t.id_ for t in generator_depending_tasks])
-        independent_tasks = [self.tasks_by_id[id_] for id_ in ids_independent_tasks]
-
-        tasks = []
-        tasks.extend(independent_tasks)
-        tasks.extend(generator_depending_tasks)
-        tasks.extend(new_tasks)
-        self.tasks = tasks
-
-        self._reset()
-
-    def has_generator_task(self):
-        return any([isinstance(t, floto.specs.task.Generator) for t in self.tasks])
-
-    def _get_column_of_graph_matrix(self, task_id):
-        idx = self.id_to_idx[task_id]
-        return [row[idx] for row in self.graph]
-
-    def _remove_dependency(self, dependencies, task_to_remove):
-        return [t for t in dependencies if t.id_ != task_to_remove.id_]
-
-    def _reset(self):
-        """Reset execution graph. None values will be auto-generated at next calls."""
-        self._id_to_idx = None
-        self._idx_to_id = None
-        self._ids = None
-        self._tasks_by_id = None
-        self.graph_matrix = None
-
-
+        return number_nodes_zero_in_degree == len(self.outgoing_vertices)
+   

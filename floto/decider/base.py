@@ -1,10 +1,8 @@
+import logging
 import multiprocessing
-import sys
 import socket
 
 import floto.api
-
-import logging
 
 logger = logging.getLogger(__name__)
 

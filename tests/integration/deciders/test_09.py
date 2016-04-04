@@ -11,21 +11,23 @@ from floto.specs.retry_strategy import InstantRetry
 
 
 def test_09():
+    domain = 'floto_test'
     rs = InstantRetry(retries=10)
     rs_2 = InstantRetry(retries=2)
 
-    task_1 = ActivityTask(name='activity1', version='v5', retry_strategy=rs_2)
-    task_failes_3 = ActivityTask(name='activity_fails_3', version='v2', retry_strategy=rs)
+    task_1 = ActivityTask(domain=domain, name='activity1', version='v5', retry_strategy=rs_2)
+    task_failes_3 = ActivityTask(domain=domain, name='activity_fails_3', version='v2', retry_strategy=rs)
     timer_a = Timer(id_='TimerA', delay_in_seconds=15)
 
-    timer_b = Timer(id_='TimerB', delay_in_seconds=3, requires=[task_1])
-    task_2 = ActivityTask(name='activity2', version='v4', requires=[timer_b], retry_strategy=rs_2)
-    task_4 = ActivityTask(name='activity4', version='v2', requires=[task_1, task_2],
-                          retry_strategy=rs_2)
+    timer_b = Timer(id_='TimerB', delay_in_seconds=3, requires=[task_1.id_])
+    task_2 = ActivityTask(domain=domain, name='activity2', version='v4', requires=[timer_b.id_], 
+            retry_strategy=rs_2)
+    task_4 = ActivityTask(domain=domain, name='activity4', version='v2', 
+                          requires=[task_1.id_, task_2.id_], retry_strategy=rs_2)
 
     tasks = [task_1, task_failes_3, timer_a, timer_b, task_2, task_4]
 
-    decider_spec = DeciderSpec(domain='floto_test',
+    decider_spec = DeciderSpec(domain=domain,
                                task_list=str(uuid.uuid4()),
                                activity_tasks=tasks,
                                default_activity_task_list='floto_activities',

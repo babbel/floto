@@ -294,17 +294,17 @@ class TestHistory():
 
     def test_task_completed_with_activity_task(self, mocker, history):
         mocker.patch('floto.History.is_activity_task_completed', return_value=True)
-        activity_task = floto.specs.task.ActivityTask()
+        activity_task = floto.specs.task.ActivityTask(domain='d', name='a', version='1')
         assert history.is_task_completed(activity_task)
 
     def test_task_complete_with_timer(self, mocker, history):
         mocker.patch('floto.History.is_timer_task_completed', return_value=True)
-        timer = floto.specs.task.Timer()
+        timer = floto.specs.task.Timer(id_='t1')
         assert history.is_task_completed(timer)
 
     def test_task_complete_with_child_workflow(self, mocker, history):
         mocker.patch('floto.History.is_child_workflow_completed', return_value=True)
-        cw = floto.specs.task.ChildWorkflow()
+        cw = floto.specs.task.ChildWorkflow(domain='d', workflow_type_name='cw', workflow_type_version='1')
         assert history.is_task_completed(cw)
 
     def test_is_task_completed_raises(self, history):
@@ -601,12 +601,16 @@ class TestHistory():
 
     def test_get_number_activity_failures_activity_task(self, history, mocker):
         mocker.patch('floto.History.get_number_activity_task_failures')
-        history.get_number_activity_failures(floto.specs.task.ActivityTask(activity_id='tid'))
+        history.get_number_activity_failures(floto.specs.task.ActivityTask(domain='d', name='a', 
+            version='1', id_='tid'))
         history.get_number_activity_task_failures.assert_called_once_with('tid')
 
     def test_get_number_activity_failures_child_workflow(self, history, mocker):
         mocker.patch('floto.History.get_number_child_workflow_failures')
-        history.get_number_activity_failures(floto.specs.task.ChildWorkflow(workflow_id='wid'))
+        history.get_number_activity_failures(floto.specs.task.ChildWorkflow(domain='d',
+                                                                            workflow_type_name='cw',
+                                                                            workflow_type_version='1',
+                                                                            id_='wid'))
         history.get_number_child_workflow_failures.assert_called_once_with('wid')
 
     def test_get_number_activity_failures_unknown_type(self, history):
@@ -818,7 +822,7 @@ class TestHistory():
                    'activityTaskScheduledEventAttributes':{'activityId':'a_id'}}
         empty_response['events'] = [activity_task_completed_event, activity_task_scheduled_event]
         h = floto.History(domain='d', task_list='tl', response=empty_response)
-        task = floto.specs.task.ActivityTask(activity_id='a_id')
+        task = floto.specs.task.ActivityTask(domain='d', name='a', version='1', id_='a_id')
         assert h.get_result_completed_activity(task) == {'foo':'bar'}
 
     def test_get_result_completed_activity_wo_result(self, dt1, dt2, empty_response):
@@ -833,7 +837,7 @@ class TestHistory():
                    'activityTaskScheduledEventAttributes':{'activityId':'a_id'}}
         empty_response['events'] = [activity_task_completed_event, activity_task_scheduled_event]
         h = floto.History(domain='d', task_list='tl', response=empty_response)
-        task = floto.specs.task.ActivityTask(activity_id='a_id')
+        task = floto.specs.task.ActivityTask(domain='d', name='a', version='1', id_='a_id')
         assert not h.get_result_completed_activity(task)
 
     def test_get_result_completed_activity_rescheduled(self, dt1, dt2, dt3, page1_response, 
@@ -862,7 +866,7 @@ class TestHistory():
         mocker.patch('floto.api.Swf.client', new_callable=PropertyMock, return_value=swf_mock)
 
         h = floto.History(domain='d', task_list='tl', response=page1_response)
-        task = floto.specs.task.ActivityTask(activity_id='a_id')
+        task = floto.specs.task.ActivityTask(domain='d', name='a', version='1', id_='a_id')
         assert h.get_result_completed_activity(task) == {'foo':'bar'} 
 
     @pytest.mark.parametrize('events,result',

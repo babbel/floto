@@ -10,9 +10,12 @@ from floto.specs import DeciderSpec
 from floto.specs.task import ActivityTask, Generator
 
 def test_17():
+    domain = 'floto_test'
     rs = floto.specs.retry_strategy.InstantRetry(retries=2)
-    generator_task_1 = Generator(name='generator1', version='v1', retry_strategy=rs) 
-    task_2 = ActivityTask(name='activity6', version='v1', requires=[generator_task_1])
+    generator_task_1 = Generator(domain=domain, name='generator1', version='v1', 
+            retry_strategy=rs) 
+    task_2 = ActivityTask(domain=domain, name='activity6', version='v1', 
+            requires=[generator_task_1.id_])
     
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),

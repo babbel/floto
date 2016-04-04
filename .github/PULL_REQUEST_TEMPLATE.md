@@ -10,4 +10,4 @@
 - [ ] Integration Tests
 - [ ] Documentation
 
-/cc @amatthies, @phillippahl
+/cc @amatthies, @philipppahl

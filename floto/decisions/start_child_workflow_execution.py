@@ -1,9 +1,10 @@
-from floto.decisions import Decision
-import floto.specs
-
 import logging
 
+import floto.specs
+from floto.decisions import Decision
+
 logger = logging.getLogger(__name__)
+
 
 class StartChildWorkflowExecution(Decision):
     def __init__(self, **args):
@@ -22,6 +23,10 @@ class StartChildWorkflowExecution(Decision):
         startChildWorkflowExecutionDecisionAttributes.input
         """
 
+        super().__init__(required_fields=['decisionType',
+                                          'startChildWorkflowExecutionDecisionAttributes.workflowId',
+                                          'startChildWorkflowExecutionDecisionAttributes.workflowType.name',
+                                          'startChildWorkflowExecutionDecisionAttributes.workflowType.version'])
         attributes = {}
         if 'workflow_id' in args:
             attributes['workflowId'] = args['workflow_id']
@@ -37,11 +42,6 @@ class StartChildWorkflowExecution(Decision):
             attributes['input'] = floto.specs.JSONEncoder.dump_object(args['input'])
 
         self.startChildWorkflowExecutionDecisionAttributes = attributes
-
-        self.required_fields = ['decisionType',
-                                'startChildWorkflowExecutionDecisionAttributes.workflowId',
-                                'startChildWorkflowExecutionDecisionAttributes.workflowType.name',
-                                'startChildWorkflowExecutionDecisionAttributes.workflowType.version']
 
     def _get_decision(self):
         d = {'decisionType': 'StartChildWorkflowExecution',

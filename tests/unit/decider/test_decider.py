@@ -7,11 +7,11 @@ from unittest.mock import Mock
 
 @pytest.fixture
 def task_1():
-    return ActivityTask(name='activity1', version='v1', input={'date':1})
+    return ActivityTask(domain='d', name='activity1', version='v1', input={'date':1})
 
 @pytest.fixture
 def task_2(task_1):
-    return ActivityTask(name='activity2', version='v1', requires=[task_1]) 
+    return ActivityTask(domain='d', name='activity2', version='v1', requires=[task_1.id_])
 
 @pytest.fixture
 def decider_spec(task_1, task_2):
@@ -25,8 +25,14 @@ def decider_spec_json(decider_spec):
     return decider_spec.to_json()
 
 @pytest.fixture
-def decider(decider_spec):
-    return floto.decider.Decider(decider_spec=decider_spec)
+def history(init_response):
+    return floto.History(domain='d', task_list='tl', response=init_response)
+
+@pytest.fixture
+def decider(decider_spec, history):
+    decider = floto.decider.Decider(decider_spec=decider_spec)
+    decider.history = history
+    return decider
 
 class TestDecider():
     def test_init_with_decider_spec(self, decider_spec, task_1):
@@ -36,16 +42,6 @@ class TestDecider():
         assert d.repeat_workflow == False
         assert d.identity == 'did'
     
-    def test_init_raises_wo_domain(self, decider_spec):
-        decider_spec.domain = None
-        with pytest.raises(ValueError):
-            d =  floto.decider.Decider(decider_spec=decider_spec)
-
-    def test_init_raises_wo_task_list(self, decider_spec):
-        decider_spec.task_list = None
-        with pytest.raises(ValueError):
-            d =  floto.decider.Decider(decider_spec=decider_spec)
-
     def test_default_activity_task_list(self, decider_spec):
         d =  floto.decider.Decider(decider_spec=decider_spec)
         assert not d.default_activity_task_list
@@ -70,10 +66,6 @@ class TestDecider():
         assert isinstance(d.decider_spec, floto.specs.DeciderSpec)
         assert d.decider_spec.activity_tasks[0].input == {'date':1}
 
-    def test_execution_graph(self, decider_spec_json):
-        d =  floto.decider.Decider(decider_spec=decider_spec_json)
-        assert isinstance(d.decision_builder.execution_graph, floto.decider.ExecutionGraph)
-
     def test_get_decisions(self, decider, mocker):
         mocker.patch('floto.decider.DecisionBuilder.get_decisions', return_value=['d'])
         mocker.patch('floto.decider.DecisionBuilder.is_terminate_workflow', return_value=True)
@@ -92,7 +84,7 @@ class TestDecider():
         info = {'executionInfo':{'workflowType':{'name':'wf_name', 'version':'v1'}}}
         mocker.patch('floto.decider.Base.get_workflow_execution_description', return_value=info)
         mocker.patch('floto.api.Swf.start_workflow_execution')
-        mocker.patch('floto.decider.DecisionInput.get_input_workflow', return_value='wf_input')
+        mocker.patch('floto.History.get_workflow_input', return_value='wf_input')
 
         decider.repeat_workflow = True
         decider.domain = 'd'
