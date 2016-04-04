@@ -27,7 +27,7 @@ class DecisionBuilder:
         self._decompress_generator_result = False
 
     def get_decisions(self, history):
-        logger.debug('get_decisons...')
+        logger.debug('get_decisions...')
 
         self._set_history(history)
         self.first_event_id = self.history.previous_decision_id
@@ -63,7 +63,7 @@ class DecisionBuilder:
 
         if not self.is_terminate_workflow() and events['completed'] and \
                 self.all_workflow_tasks_finished(events['completed']):
-            decisions = self.get_decisions_after_successfull_workflow_execution()
+            decisions = self.get_decisions_after_successful_workflow_execution()
 
         if not self.is_terminate_workflow() and events['completed']:
             decisions.extend(self.get_decisions_after_activity_completion(events['completed']))
@@ -96,7 +96,7 @@ class DecisionBuilder:
         -------
         list
             List of ScheduleActivityTask decision if the tasks are being resubmitted. 
-            If not, a TerminateWorkflow decision is returned and the self.terminate_worklfow flag
+            If not, a TerminateWorkflow decision is returned and the self.terminate_workflow flag
             is set.
         """
         decisions = []
@@ -152,7 +152,7 @@ class DecisionBuilder:
             decisions.extend(builder._collect_decisions())
         return decisions
 
-    def get_decisions_after_successfull_workflow_execution(self):
+    def get_decisions_after_successful_workflow_execution(self):
         tasks = [self.tasks_by_id[i] for i in self.execution_graph.get_outgoing_nodes()]
         result = self.decision_input.collect_results(tasks)
         d = floto.decisions.CompleteWorkflowExecution(result=result)
@@ -209,7 +209,7 @@ class DecisionBuilder:
 
     def all_workflow_tasks_finished(self, completed_tasks):
         """Return True if all tasks of this workflow have finished, False otherwise."""
-        logger.debug('DecisionBuilder.all_workflow_tasks_finished({})'.format((completed_tasks)))
+        logger.debug('DecisionBuilder.all_workflow_tasks_finished({})'.format(completed_tasks))
 
         if self.completed_contain_generator(completed_tasks):
             return False
@@ -228,7 +228,7 @@ class DecisionBuilder:
     def completed_have_depending_tasks(self, completed_tasks):
         """Return True if any of the tasks in "completed_tasks" has a task which depends on it.
         False otherwise."""
-        logger.debug('DecisionBuilder.completed_have_depending_tasks({})'.format((completed_tasks)))
+        logger.debug('DecisionBuilder.completed_have_depending_tasks({})'.format(completed_tasks))
         for t in completed_tasks:
             id_ = self.history.get_id_task_event(t)
             depending_tasks = self.execution_graph.get_depending(id_)

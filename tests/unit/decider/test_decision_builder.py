@@ -268,10 +268,10 @@ class TestDecisionBuilder(object):
         d = builder.get_decisions_decision_failed([failed])
         assert d == ['d']
         
-    def test_get_decisions_after_successfull_workflow_execution(self, builder, mocker, task_2):
+    def test_get_decisions_after_successful_workflow_execution(self, builder, mocker, task_2):
         mocker.patch('floto.decider.DecisionInput.collect_results', return_value='result')
         builder._build_execution_graph()
-        d = builder.get_decisions_after_successfull_workflow_execution()
+        d = builder.get_decisions_after_successful_workflow_execution()
         assert isinstance(d[0], floto.decisions.CompleteWorkflowExecution)
         assert d[0].result == 'result'
         assert builder.is_terminate_workflow() == True

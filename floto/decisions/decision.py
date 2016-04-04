@@ -1,6 +1,7 @@
 class Decision:
-    def __init__(self):
-        self.required_fields = []
+    def __init__(self, required_fields=None):
+
+        self.required_fields = required_fields or []
 
     def get_decision(self):
         d = self._get_decision()
@@ -13,7 +14,7 @@ class Decision:
     def assert_required_fields(self, decision, fields):
         for path in fields:
             if not self.path_in_dictionary(decision, path):
-                message = "Decission {0} must have key: {1}".format(self.__class__.__name__, path)
+                message = "Decision {0} must have key: {1}".format(self.__class__.__name__, path)
                 raise KeyError(message)
 
     def path_in_dictionary(self, dictionary, path):
