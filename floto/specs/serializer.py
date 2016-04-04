@@ -20,7 +20,6 @@ def get_class(class_path):
     class_name = parts[-1]
     return getattr(sys.modules[module_name], class_name)
 
-# TODO test
 def copy_dict(dict_, filter_keys=[]):
     """Returns copy of dict_, removes (key, value) if value == None or key is in filter_keys.
     """
@@ -28,7 +27,6 @@ def copy_dict(dict_, filter_keys=[]):
     logger.debug('Copied dict {}:'.format(new_dict))
     return new_dict
 
-# TODO: dict_.keys().. keeps None values. Desired behavior?
 def dict_to_ordered_dict(dict_):
     d = OrderedDict.fromkeys(sorted(dict_.keys()))
     for attr, value in sorted(dict_.items()):

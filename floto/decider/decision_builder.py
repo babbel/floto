@@ -13,8 +13,6 @@ class DecisionBuilder:
     def __init__(self, *, activity_tasks, default_activity_task_list):
         self.workflow_fail = False
         self.workflow_complete = False
-        # TODO rename to activity_tasks
-        # add generated_activity_tasks
         self.activity_tasks = activity_tasks
         self.tasks_by_id = {task.id_:task for task in activity_tasks}
         
@@ -22,7 +20,6 @@ class DecisionBuilder:
         self.default_activity_task_list = default_activity_task_list
         self.decision_input = floto.decider.DecisionInput()
 
-        # TODO move to execution_graph
         self.execution_graph = None
         self.first_event_id = None
         self.last_event_id = None

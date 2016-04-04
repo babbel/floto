@@ -48,7 +48,6 @@ class DeciderSpec:
     def deserialized(cls, **kwargs):
         """Construct an instance from a dict of attributes
         """
-        # TODO test
         cpy = floto.specs.serializer.copy_dict(kwargs, filter_keys=['type'])
         if cpy.get('activity_tasks'):
             tasks = []
