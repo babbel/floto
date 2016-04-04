@@ -24,10 +24,7 @@ class Decider(Base):
             self.decider_spec = floto.specs.DeciderSpec.from_json(decider_spec)
         else:
             self.decider_spec = decider_spec
-
-        if not (self.decider_spec.domain and self.decider_spec.task_list):
-            raise ValueError('Domain or task_list missing in decider spec')
-
+        
         self.task_list = self.decider_spec.task_list
         self.domain = self.decider_spec.domain
 
@@ -59,7 +56,7 @@ class Decider(Base):
                     'workflow_type_name': execution_info['workflowType']['name'],
                     'workflow_type_version': execution_info['workflowType']['version'],
                     'task_list': self.task_list,
-                    'input': self.decision_builder.decision_input.get_input_workflow()}
+                    'input': self.history.get_workflow_input()}
             self.swf.start_workflow_execution(**args)
             self.terminate_workflow = False
             self.terminate_decider = False

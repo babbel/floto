@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 domain = 'floto_test'
 activity_task_list = 's3_files_worker'
 
-@floto.activity(name='copyFiles', version='1')
+@floto.activity(domain=domain, name='copyFiles', version='1')
 def copy_files(context):
     from_date_iso = context['activity_task']['from_date']
     to_date_iso = context['activity_task']['to_date']
@@ -20,7 +20,7 @@ def copy_files(context):
     file_list = ['/path/to/data/{}.json'.format(day) for day in days]
     return file_list 
 
-@floto.activity(name='fileLength', version='1')
+@floto.activity(domain=domain, name='fileLength', version='1')
 def file_length(context):
     files = [v for k,v in context['workflow'].items() if 'copyFiles' in k][0]
     print('Calculating the length of the files: {}'.format(files))

@@ -10,17 +10,10 @@ class Timer(Task):
         ----------
         id_: str
             The unique id of the timer task
-        requires: Optional[list[<floto.specs.task>]]
-            List of other tasks on which this timer depends on when the workflow is executed
+        requires: Optional[list[str]]
+            List of other task ids this timer depends on when the workflow is executed
         delay_in_seconds: int
         """
         super().__init__(id_=id_, requires=requires)
         self.delay_in_seconds = delay_in_seconds
 
-    @classmethod
-    def deserialized(cls, **kwargs):
-        """Construct an instance from a dict of attributes
-        """
-        # Remove 'type' key, just in case there still is one
-        kwargs.pop('type', None)
-        return cls(**kwargs)

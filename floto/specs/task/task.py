@@ -1,7 +1,10 @@
-import hashlib
 import logging
+import hashlib
+from collections import OrderedDict
+import json
 
 import floto.specs
+import floto.specs.serializer
 
 logger = logging.getLogger(__name__)
 
@@ -13,14 +16,17 @@ class Task:
     ----------
     id_: str
         The unique id of the timer task
-    requires: Optional[list[<floto.specs.task>]]
-        List of other tasks on which this timer depends on when the workflow is executed
+    requires: Optional[list[str]]
+        List of other task ids on which this task depends on when the workflow is executed
 
     """
 
-    # TODO `requires` can be anything here, make sure it's a list of tasks
     def __init__(self, id_=None, requires=None):
         self.id_ = id_
+
+        if requires and not all([isinstance(t, str) for t in requires]):
+            raise ValueError('requires must be list of str')
+
         self.requires = requires
 
     def _default_id(self, *, domain, name, version, input):
@@ -31,10 +37,10 @@ class Task:
         str
 
         """
-        input_string = floto.specs.JSONEncoder.dump_object(input)
+        input_string = json.dumps(input, sort_keys=True) 
 
         if self.requires:
-            requires_string = ''.join([t.id_ for t in self.requires])
+            requires_string = ''.join( self.requires)
         else:
             requires_string = ''
 
@@ -48,16 +54,13 @@ class Task:
         -------
         dict
         """
-        # remove None values
-        cpy = {k: v for k, v in self.__dict__.items() if v is not None}
-
-        # add type
-        module_name = '.'.join(self.__module__.split('.')[:-1])
-        cpy['type'] = module_name + '.' + self.__class__.__name__
-
-        # in the requires list, we need nothing but the task's id_
-        requires = cpy.get('requires')
-        if requires:
-            cpy['requires'] = [{'id_': t.id_} for t in requires]
+        class_path = floto.specs.serializer.class_path(self)
+        cpy = floto.specs.serializer.ordered_dict_with_type(self.__dict__, class_path)
         logger.debug('serialized {}'.format(cpy))
         return cpy
+
+    @classmethod
+    def deserialized(cls, **kwargs):
+        cpy = floto.specs.serializer.copy_dict(kwargs, filter_keys=['type'])
+        return cls(**cpy)
+

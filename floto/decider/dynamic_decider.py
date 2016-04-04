@@ -23,8 +23,10 @@ class DynamicDecider(Decider):
             for k,v in input_.items():
                 tasks = None
                 if k == 'activity_tasks':
-                    tasks_json = json.dumps(v)
-                    tasks = json.loads(tasks_json, object_hook=floto.specs.JSONEncoder.floto_object_hook)
+                    tasks = []
+                    for t in v:
+                        task = floto.specs.serializer.get_class(t['type'])
+                        tasks.append(task.deserialized(**t))
                 else:
                     tasks = self.get_activity_tasks_from_input(v)
                 if tasks: 

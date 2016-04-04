@@ -1,12 +1,13 @@
 import logging
 
 from floto.specs.task import Task
+import floto.specs
 
 logger = logging.getLogger(__name__)
 
 
 class ActivityTask(Task):
-    def __init__(self, *, domain, name, version, activity_id=None, requires=None, input=None,
+    def __init__(self, *, domain, name, version, id_=None, requires=None, input=None,
                  retry_strategy=None, task_list=None):
         """Defines an activity task which is used in decider specs.
 
@@ -14,10 +15,10 @@ class ActivityTask(Task):
         ----------
         name: str
         version: str
-        activity_id: Optional[str]
+        id_: Optional[str]
             The id of the activity task. Defaults to: <name>:<version>:hash(input/requires)
-        requires: Optional[list]
-            List of activity tasks this activity task depends on
+        requires: Optional[list[str]]
+            List of task ids this activity task depends on
         input: Optional[dict]
         retry_strategy: Optional[floto.specs.Strategy]
         task_list : Optional[str]
@@ -25,13 +26,27 @@ class ActivityTask(Task):
         """
         super().__init__(requires=requires)
 
+        if retry_strategy and not isinstance(retry_strategy, floto.specs.retry_strategy.Strategy):
+            raise ValueError('Retry strategy must be of type floto.specs.retry_strategy.Strategy')
+
         self.domain = domain
         self.name = name
         self.version = version
         self.input = input
-        self.id_ = activity_id or self._default_id(domain=domain, name=name, version=version, input=input)
+        self.id_ = id_ or self._default_id(domain=domain, name=name, version=version, input=input)
         self.retry_strategy = retry_strategy
         self.task_list = task_list
+
+
+    def serializable(self):
+        cpy = super().serializable()
+
+        retry_strategy = cpy.get('retry_strategy')
+        if retry_strategy:
+            cpy['retry_strategy'] = retry_strategy.serializable()
+
+        logger.debug('serialized ActivityTask: {}'.format(cpy))
+        return cpy
 
     @classmethod
     def deserialized(cls, **kwargs):
@@ -49,7 +64,11 @@ class ActivityTask(Task):
         >>> obj = cls.deserialized(**attrs)
 
         """
-        kwargs['activity_id'] = kwargs.pop('id_', None)
-        # Remove 'type' key, just in case there still is one
-        kwargs.pop('type', None)
-        return cls(**kwargs)
+        cpy = floto.specs.serializer.copy_dict(kwargs, ['type'])
+
+        if cpy.get('retry_strategy'):
+            rs = floto.specs.serializer.get_class(cpy['retry_strategy']['type'])
+            cpy['retry_strategy'] = rs.deserialized(**cpy['retry_strategy'])
+
+        logger.debug('Deserialize ActivityTask with: {}'.format(cpy))
+        return cls(**cpy)

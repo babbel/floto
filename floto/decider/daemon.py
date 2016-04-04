@@ -55,6 +55,6 @@ class Daemon(Base):
 
     def get_decider_spec(self, json_decider_spec, task_list, domain):
         decider_spec = floto.specs.DeciderSpec.from_json(json_decider_spec)
-        decider_spec.task_list = task_list
-        decider_spec.domain = domain
+        #decider_spec.task_list = task_list
+        #decider_spec.domain = domain
         return decider_spec
