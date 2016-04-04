@@ -38,15 +38,15 @@ class Decider(Base):
                    default_activity_task_list=self.default_activity_task_list)
 
     def get_decisions(self):
-        """Heart of the decider logics. Called by floto.decider.Base in each 
-        'poll_for_decision_taks loop'. Fills self.decisions, which are returned to SWF.
+        """Heart of the decider logic. Called by floto.decider.Base in each
+        'poll_for_decision_task loop'. Fills self.decisions, which are returned to SWF.
         """
         logger.debug('Decider.get_decisions...')
         self.decisions = self.decision_builder.get_decisions(self.history)
         self.terminate_workflow = self.decision_builder.is_terminate_workflow()
 
     def tear_down(self):
-        """If self.reapeat_workflow is True, the workflow is restarted after successful
+        """If self.repeat_workflow is True, the workflow is restarted after successful
         completion."""
         logger.debug('Decider.tear_down...')
         if self.repeat_workflow:
