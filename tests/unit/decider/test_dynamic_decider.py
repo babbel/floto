@@ -29,17 +29,17 @@ class TestDynamicDecider:
         assert decider.decider_spec == decider_spec
         assert decider.identity == 'd_id'
 
-    def test_get_decisions(self, decider, mocker):
+    def test_get_decisions(self, decider, mocker, task):
         mocker.patch('floto.History.get_workflow_input', return_value='wf_input')
         mocker.patch('floto.decider.DynamicDecider.get_activity_tasks_from_input', 
-                return_value=['t'])
+                return_value=[task])
         mocker.patch('floto.decider.DecisionBuilder.get_decisions')
         mocker.patch('floto.decider.DecisionBuilder.is_terminate_workflow', return_value=True)
         decider.get_decisions()
         decider.get_activity_tasks_from_input.assert_called_once_with('wf_input')
         assert decider.terminate_workflow
 
-    def test_activity_tasks_from_inpu(self, decider):
+    def test_activity_tasks_from_input(self, decider):
         d =  {'activity_tasks': [{'id_': 'fileLength:1:2be88ca424:d',
                                           'name': 'fileLength',
                                           'domain': 'd',

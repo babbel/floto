@@ -10,17 +10,18 @@ from floto.specs.task import ActivityTask
 
 
 def test_03():
+    domain = 'floto_test'
     rs = floto.specs.retry_strategy.InstantRetry(retries=2)
-    a1 = ActivityTask(name='activity1', version='v5', retry_strategy=rs) 
-    a2 = ActivityTask(name='activity2', version='v4', retry_strategy=rs) 
+    a1 = ActivityTask(domain=domain, name='activity1', version='v5', retry_strategy=rs) 
+    a2 = ActivityTask(domain=domain, name='activity2', version='v4', retry_strategy=rs) 
 
-    decider_spec = DeciderSpec(domain='floto_test',
+    decider_spec = DeciderSpec(domain=domain,
                                task_list=str(uuid.uuid4()),
                                activity_tasks=[a1, a2],
                                default_activity_task_list='floto_activities',
                                terminate_decider_after_completion=True)
 
-    decider = floto.decider.Decider(decider_spec=decider_spec)
+    decider = floto.decider.Decider(decider_spec=decider_spec.to_json())
 
     workflow_args = {'domain':decider_spec.domain,
                      'workflow_type_name':'my_workflow_type',

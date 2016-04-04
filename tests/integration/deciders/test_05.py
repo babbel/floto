@@ -10,10 +10,12 @@ from floto.specs.task import ActivityTask
 
 
 def test_05():
+    domain = 'floto_test'
     rs = floto.specs.retry_strategy.InstantRetry(retries=8)
-    activity_task = ActivityTask(name='activity_fails_3', version='v2', retry_strategy=rs)
+    activity_task = ActivityTask(domain=domain, name='activity_fails_3', version='v2', 
+            retry_strategy=rs)
 
-    decider_spec = DeciderSpec(domain='floto_test',
+    decider_spec = DeciderSpec(domain=domain,
                                task_list=str(uuid.uuid4()),
                                activity_tasks=[activity_task],
                                default_activity_task_list='floto_activities',

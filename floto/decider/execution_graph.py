@@ -16,6 +16,7 @@ class ExecutionGraph:
 
     def add_dependencies(self, id_, dependencies):
         """Adds the dependencies of task with id_ to the graph."""
+        print(self.ingoing_vertices)
         if not id_ in self.ingoing_vertices:
             raise ValueError('No node {} in graph'.format(id_))
 
@@ -42,13 +43,16 @@ class ExecutionGraph:
     def get_outgoing_nodes(self):
         return [node for node,vertices in self.outgoing_vertices.items() if not vertices]
 
+    def get_nodes_zero_in_degree(self):
+        return [node for node,vertices in self.ingoing_vertices.items() if not vertices]
+
     def is_acyclic(self):
         """Returns True if graph does not have cycles.
-        Implementation of Kahn's algorithm for cycle check:
+        Implementation of Kahn's algorithm for cycle check O(n):
         https://en.wikipedia.org/wiki/Topological_sorting
         """
         in_degrees = {k:len(v) for k,v in self.ingoing_vertices.items()}
-        nodes_zero_in_degree = set([k for k,v in in_degrees.items() if v == 0])
+        nodes_zero_in_degree = set(self.get_nodes_zero_in_degree())
 
         number_nodes_zero_in_degree = 0 
          
@@ -59,9 +63,8 @@ class ExecutionGraph:
                 in_degrees[v] -= 1
                 if in_degrees[v] == 0:
                     nodes_zero_in_degree.add(v)
-
        
-        logger.debug('Number of sorted nodes: {}. Number of nodes in graph: {}'.
+        logger.debug('Graph cycle check: Number of sorted nodes: {}. Number of nodes in graph: {}'.
                 format(number_nodes_zero_in_degree, len(self.outgoing_vertices)))
 
         return number_nodes_zero_in_degree == len(self.outgoing_vertices)

@@ -19,13 +19,14 @@ def activity(*, domain, name, version):
 
 
 def compress_generator_result(result):
+    serializable = [t.serializable() for t in result]
     if result and COMPRESS_GENERATOR_RESULT:
-        j = floto.specs.JSONEncoder.dump_object(result)
+        j = floto.specs.JSONEncoder.dump_object(serializable)
         z = gzip.compress(j.encode())
         z = 'x'.join([format(c, 'x') for c in z])
         return z
     else:
-        return result
+        return serializable
 
 
 def check_type_generator_output(func):
@@ -50,3 +51,4 @@ def generator(*, domain, name, version):
         ACTIVITY_FUNCTIONS[identifier] = check_type_generator_output(func)
 
     return function_wrapper
+

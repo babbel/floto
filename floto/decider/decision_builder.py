@@ -11,9 +11,6 @@ import json
 
 class DecisionBuilder:
     def __init__(self, *, activity_tasks, default_activity_task_list):
-        if not activity_tasks:
-            raise ValueError("no activity tasks!")
-
         self.workflow_fail = False
         self.workflow_complete = False
         # TODO rename to activity_tasks
@@ -36,13 +33,14 @@ class DecisionBuilder:
         logger.debug('get_decisons...')
 
         self._set_history(history)
+        self.first_event_id = self.history.previous_decision_id
+        self.last_event_id = self.history.decision_task_started_event_id
+
         self._build_execution_graph()
 
         self.workflow_fail = False
         self.workflow_complete = False
      
-        self.first_event_id = self.history.previous_decision_id
-        self.last_event_id = self.history.decision_task_started_event_id
         decisions = self._collect_decisions()
         return decisions
 
@@ -81,10 +79,10 @@ class DecisionBuilder:
     def get_decisions_after_workflow_start(self):
         logger.debug('DecisionBuilder.get_decisions_after_workflow_start()')
         decisions = []
-        tasks = self.execution_graph.get_first_tasks()
-        # TODO change to task id
-        for t in tasks:
-            decision = self.get_decision_schedule_activity(task=t)
+        task_ids = self.execution_graph.get_nodes_zero_in_degree()
+        for task_id in task_ids:
+            task = self.tasks_by_id[task_id]
+            decision = self.get_decision_schedule_activity(task=task)
             decisions.append(decision)
         return decisions
 
@@ -109,20 +107,22 @@ class DecisionBuilder:
             if self.is_terminate_workflow():
                 break
             id_ = self.history.get_id_task_event(e)
-            t = self.execution_graph.tasks_by_id[id_]
+            t = self.tasks_by_id[id_]
             if t.retry_strategy:
                 failures = self.history.get_number_activity_failures(t)
                 if t.retry_strategy.is_task_resubmitted(failures):
-                    decision = self.get_decision_schedule_activity(task=t, is_failed_task=True)
+                    decision = self.get_decision_schedule_activity(task=t)
                     decisions.append(decision)
                 else:
                     reason = 'task_retry_limit_reached'
                     details = self.decision_input.get_details_failed_tasks(task_events)
-                    decisions = self.get_decisions_after_failed_workflow_execution(reason=reason, details=details)
+                    decisions = self.get_decisions_after_failed_workflow_execution(reason=reason, 
+                            details=details)
             else:
                 reason = 'task_failed'
                 details = self.decision_input.get_details_failed_tasks(task_events)
-                decisions = self.get_decisions_after_failed_workflow_execution(reason=reason, details=details)
+                decisions = self.get_decisions_after_failed_workflow_execution(reason=reason, 
+                        details=details)
         return decisions
 
     def get_decisions_after_activity_completion(self, events):
@@ -156,14 +156,14 @@ class DecisionBuilder:
         return decisions
 
     def get_decisions_after_successfull_workflow_execution(self):
-        tasks = [self.task_by_id[i] for i in self.execution_graph.get_outgoing_nodes()]
+        tasks = [self.tasks_by_id[i] for i in self.execution_graph.get_outgoing_nodes()]
         result = self.decision_input.collect_results(tasks)
         d = floto.decisions.CompleteWorkflowExecution(result=result)
         self.workflow_complete = True
         return [d]
 
     def get_decision_schedule_activity(self, *, task):
-        requires = [self.task_by_id[i] for i in self.execution_graph.get_requires(task.id_)]
+        requires = [self.tasks_by_id[i] for i in self.execution_graph.get_requires(task.id_)]
 
         if isinstance(task, floto.specs.task.ActivityTask):
             input_ = self.decision_input.get_input(task, 'activity_task', requires)
@@ -242,7 +242,7 @@ class DecisionBuilder:
     def outgoing_nodes_completed(self):
         """Check if all activity tasks which are outgoing vertices of the execution graph are
         completed."""
-        outgoing_nodes = [self.task_by_id[i] for i in self.execution_graph.get_outgoing_nodes()]
+        outgoing_nodes = [self.tasks_by_id[i] for i in self.execution_graph.get_outgoing_nodes()]
         for t in outgoing_nodes:
             if not self.history.is_task_completed(t):
                 return False
@@ -259,14 +259,14 @@ class DecisionBuilder:
         list: floto.specs.Task
             The tasks to be scheduled in the next decision
         """
-        logger.debug('DecisionBuilder.get_tasks_to_be_scheduled({})'.format(completed_tasks))
+        logger.debug('DecisionBuilder.get_tasks_to_be_scheduled({})'.format(completed_task_ids))
         tasks = set()
         for completed_task_id in completed_task_ids:
             for d in self.execution_graph.get_depending(completed_task_id):
-                requires = self.execution_graph.get_requires(d)
+                requires = [self.tasks_by_id[id_] for id_ in self.execution_graph.get_requires(d)]
                 if all([self.history.is_task_completed(t) for t in requires]):
                     tasks.add(d)
-        return [self.task_by_id[i] for i in tasks]
+        return [self.tasks_by_id[i] for i in tasks]
 
     def _update_execution_graph_with_completed_events(self, completed_events):
         """Updates the execution graph if the completed activities contain generators."""
@@ -291,7 +291,16 @@ class DecisionBuilder:
             new_tasks.append(task.deserialized(**serializable))
         
         self.tasks_by_id.update({task.id_:task for task in new_tasks})
+
         self._add_tasks_to_execution_graph(new_tasks)
+
+        # TODO test
+        for id_ in self.execution_graph.get_depending(generator.id_) :
+            self.execution_graph.add_dependencies(id_, [t.id_ for t in new_tasks])
+
+        for t in new_tasks:
+            self.execution_graph.add_dependencies(t.id_, [generator.id_])
+
 
     def _decompress_result(self, compressed_result):
         result_bytes = bytes([int(c, 16) for c in compressed_result.split('x')])
@@ -315,10 +324,12 @@ class DecisionBuilder:
         return g
 
     def _add_tasks_to_execution_graph(self, tasks):
+        logger.debug('Add tasks to execution graph: {}'.format(tasks))
         for task in tasks:
             self.execution_graph.add_task(task.id_)
         for task in tasks:
-            self.execution_graph.add_dependencies(task.id_, task.requires)
+            if task.requires:
+                self.execution_graph.add_dependencies(task.id_, task.requires)
 
     def _build_execution_graph(self):
         self.execution_graph = floto.decider.ExecutionGraph()

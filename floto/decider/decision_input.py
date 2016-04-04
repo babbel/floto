@@ -1,5 +1,8 @@
+import logging
 import floto.specs
 import json
+
+logger = logging.getLogger(__name__)
 
 class DecisionInput:
     def __init__(self):
@@ -15,24 +18,6 @@ class DecisionInput:
             #return self._get_input_scheduled_task(task.id_, event_type) 
         #else:
             #return self._get_input(task)
-
-    def get_details_failed_tasks(self, failed_tasks_events):
-        details = {}
-        for e in failed_tasks_events:
-            attributes = self.history.get_event_attributes(e)
-            if 'details' in attributes:
-                id_ = self.history.get_id_task_event(e)
-                details[id_] = floto.specs.JSONEncoder.load_string(attributes['details'])
-        return details
-
-    def collect_results(self, tasks):
-        result = {}
-        for task in tasks:
-            if not isinstance(d, floto.specs.task.Generator):
-                r = self.history.get_result_completed_activity(d)
-                if r:
-                    result[task.id_] = r
-        return result
 
     def get_input(self, task, task_input_key, required_tasks):
         """Gets the input for <task>. If task has dependencies the result of the dependencies are
@@ -53,6 +38,25 @@ class DecisionInput:
 
         return input_ if input_ else None
 
+    def get_details_failed_tasks(self, failed_tasks_events):
+        details = {}
+        for e in failed_tasks_events:
+            attributes = self.history.get_event_attributes(e)
+            if 'details' in attributes:
+                id_ = self.history.get_id_task_event(e)
+                details[id_] = floto.specs.JSONEncoder.load_string(attributes['details'])
+        return details
+
+    def collect_results(self, tasks):
+        logger.debug('Collection results for {}'.format(tasks))
+        result = {}
+        for task in tasks:
+            if not isinstance(task, floto.specs.task.Generator):
+                r = self.history.get_result_completed_activity(task)
+                if r:
+                    result[task.id_] = r
+        return result
+
     def _remove_activity_tasks(self, input_):
         if isinstance(input_, dict):
             new_input = {}
@@ -64,10 +68,4 @@ class DecisionInput:
             return new_input
         else:
             return input_
-
-    #def _get_input_scheduled_task(self, id_, event_type):
-        #scheduled_event = self.history.get_event_by_task_id_and_type(id_, event_type)
-        #attributes = self.history.get_event_attributes(scheduled_event)
-        #input_ = json.loads(attributes['input']) if 'input' in attributes else None
-        #return input_
 

@@ -13,7 +13,7 @@ from floto.specs.retry_strategy import InstantRetry
 
 def decider_spec_child_workflow():
     rs = InstantRetry(retries=1)
-    task_1 = ActivityTask(name='activity2', version='v4', retry_strategy=rs)
+    task_1 = ActivityTask(domain='floto_test', name='activity2', version='v4', retry_strategy=rs)
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list='child_workflow_task_list',
                                activity_tasks=[task_1],
@@ -23,7 +23,7 @@ def decider_spec_child_workflow():
 
 def decider_spec_workflow():
     rs = InstantRetry(retries=1)
-    child_workflow = ChildWorkflow(workflow_type_name='test_child_workflow', 
+    child_workflow = ChildWorkflow(domain='floto_test', workflow_type_name='test_child_workflow', 
             workflow_type_version='v2', retry_strategy=rs, task_list='child_workflow_task_list')
     decider_spec = DeciderSpec(domain='floto_test',
                                task_list=str(uuid.uuid4()),
