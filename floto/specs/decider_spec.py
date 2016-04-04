@@ -11,7 +11,7 @@ class DeciderSpec:
     """Specification of a decider. Objects of this class define the execution logic of
     floto.decider.Deciders"""
 
-    def __init__(self, *, domain, task_list, activity_tasks,
+    def __init__(self, *, domain, task_list, activity_tasks=None,
                  default_activity_task_list=None, repeat_workflow=False,
                  terminate_decider_after_completion=False):
         """

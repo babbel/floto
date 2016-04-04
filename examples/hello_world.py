@@ -15,14 +15,15 @@ import floto.decorators
 swf = floto.api.Swf()
 
 # Register a domain
-swf.domains.register_domain('floto_test')
+domain = 'floto_test'
+swf.domains.register_domain(domain)
 
 # Define and register a workflow type.
-workflow_type = floto.api.WorkflowType(domain='floto_test', name='my_workflow_type', version='v1')
+workflow_type = floto.api.WorkflowType(domain=domain, name='my_workflow_type', version='v1')
 swf.register_workflow_type(workflow_type)
 
 # Define and register an activity type
-activity_type = floto.api.ActivityType(domain='floto_test', name='simple_activity', version='v1')
+activity_type = floto.api.ActivityType(domain=domain, name='simple_activity', version='v1')
 swf.register_activity_type(activity_type)
 
 
@@ -30,8 +31,8 @@ swf.register_activity_type(activity_type)
 ### Create a task and the decider and run it ###
 ################################################
 
-simple_task = floto.specs.task.ActivityTask(name='simple_activity', version='v1')
-decider_spec = floto.specs.DeciderSpec(domain='floto_test',
+simple_task = floto.specs.task.ActivityTask(domain=domain, name='simple_activity', version='v1')
+decider_spec = floto.specs.DeciderSpec(domain=domain,
                                        task_list='simple_decider',
                                        default_activity_task_list='hello_world_atl',
                                        terminate_decider_after_completion=True,
@@ -44,7 +45,7 @@ decider.run(separate_process=True)
 ### Create an activity and start a worker ###
 #############################################
 
-@floto.activity(name='simple_activity', version='v1')
+@floto.activity(domain=domain, name='simple_activity', version='v1')
 def simple_activity():
     print('\nSimpleWorker: I\'m working!')
     for i in range(3):
@@ -56,7 +57,7 @@ def simple_activity():
 
 
 def start_worker():
-    worker = floto.ActivityWorker(domain='floto_test', task_list='hello_world_atl')
+    worker = floto.ActivityWorker(domain=domain, task_list='hello_world_atl')
     worker.run()
 
 
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     worker.start()
 
     print('Starting workflow...')
-    swf.start_workflow_execution(domain='floto_test',
+    swf.start_workflow_execution(domain=domain,
                                  workflow_type_name=workflow_type.name,
                                  workflow_type_version=workflow_type.version,
                                  task_list='simple_decider')

@@ -16,7 +16,6 @@ class ExecutionGraph:
 
     def add_dependencies(self, id_, dependencies):
         """Adds the dependencies of task with id_ to the graph."""
-        print(self.ingoing_vertices)
         if not id_ in self.ingoing_vertices:
             raise ValueError('No node {} in graph'.format(id_))
 
