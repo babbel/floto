@@ -25,5 +25,41 @@ install:
 script:
   - py.test -vv -r sxX
 
+before_deploy:
+  - zip -r latest .
+  - mkdir -p deploy_dest
+  - cp latest.zip deploy_dest/$TRAVIS_COMMIT.zip
+  - mv latest.zip deploy_dest/latest.zip
+
+
+deploy:
+  # push zips to s3
+  # Staging environment
+  - env:               staging
+    provider:          s3
+    access_key_id:     $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    bucket:            $AWS_BUCKET
+    region:            $AWS_BUCKET_REGION
+    local_dir:         deploy_dest
+    upload-dir:        $TRAVIS_REPO_SLUG/staging
+    acl:               private # keep them private
+    skip_cleanup:      true
+    on:
+      branch: master
+
+  # Production environment
+  - env:               production
+    provider:          s3
+    access_key_id:     $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    bucket:            $AWS_BUCKET
+    region:            $AWS_BUCKET_REGION
+    upload-dir:        $TRAVIS_REPO_SLUG/production/$TRAVIS_COMMIT
+    acl:               private # keep them private
+    skip_cleanup:      true
+    on:
+      branch: release
+
 notifications:
   email: true
