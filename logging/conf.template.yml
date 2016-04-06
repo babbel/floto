@@ -16,7 +16,20 @@ handlers:
         maxBytes: 15000000 
         backupCount: 5
         encoding: utf8
-
+    activity_worker_file_handler:
+        class: logging.handlers.RotatingFileHandler
+        level: INFO            
+        formatter: base_formatter
+        filename: activity_worker.log
+        maxBytes: 15000000 
+        backupCount: 5
+        encoding: utf8
+        
 root:
     level: INFO
     handlers: [file_handler]
+
+loggers:
+    floto.activity_worker:
+        level: INFO
+        handlers: [activity_worker_file_handler]
