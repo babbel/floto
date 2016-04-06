@@ -1,0 +1,22 @@
+---
+version: 1
+disable_existing_loggers: False
+
+formatters:
+    base_formatter:
+        datefmt: '%Y-%m-%d %H:%M:%S:%z'
+        format: '%(asctime)s:%(levelname)s:%(name)s:%(message)s'
+
+handlers:
+    file_handler:
+        class: logging.handlers.RotatingFileHandler
+        level: INFO            
+        formatter: base_formatter
+        filename: floto.log
+        maxBytes: 15000000 
+        backupCount: 5
+        encoding: utf8
+
+root:
+    level: INFO
+    handlers: [file_handler]
