@@ -4,10 +4,11 @@ import os
 import logging
 import sys
 import time
-import atexit
+
 import os.path
 import uuid
 import tempfile
+import psutil
 from signal import SIGTERM
 
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class Daemon:
-    """This needs to be inherited and the run method overwritten to create a deamon.
+    """This needs to be inherited and run method overwritten to create a deamon.
     It forks the current process to get a deamon. 
     See 'Python Cookbook', Martelli et al. O'Reilly, 2nd edition, page: 388
     and https://github.com/ImmobilienScout24/succubus/blob/master/src/main/python/succubus/daemonize.py """
@@ -36,7 +37,6 @@ class Daemon:
         if len(sys.argv) != 2:
             raise Exception('Something is wrong, 2 parameters expected: <daemon.py> <start|stop|status> ')
         self.command = sys.argv[1]
-
 
 
     def daemonize(self, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
@@ -96,20 +96,22 @@ class Daemon:
 
     def stop(self): 
         """Stop the daemon."""
-
-        pid = self.get_pid_from_file()
-        if pid:
-           try:                
+        pid = self.get_pid_from_file()  
+        try:  
+            os.remove(self.pid_file)        
+            if pid:           
                os.kill(pid, SIGTERM)
-               os.remove(self.pid_file)
-           except:
-               logger.error('Problem killing process')       
-        else:
-            sys.stdout.write('pid not found at: ' + self.pid_file + '. Is daemon running? \n')
+            else:
+                sys.stdout.write('pid not found at: ' + self.pid_file + '. Is daemon running? \n')
+            
+        except:
+            logger.error('Problem killing process')  
+
+        
 
 
     def get_pid_from_file(self):
-
+        """Returns pid of current daemon."""
         if os.path.isfile(self.pid_file):
             try:
                 pid = int(open(self.pid_file).read().strip())
@@ -123,19 +125,28 @@ class Daemon:
     def start(self):
         """Start the daemon."""
         if os.path.isfile(self.pid_file): 
-            raise Exception('Seems daemon is already running')
+            pid = self.get_pid_from_file()
+            if psutil.pid_exists(pid):
+                sys.stdout.write('pid already exists')
+                raise Exception('Seems daemon is already running')
+            else: 
+                raise Exception('Something went wrong, try turn it on and off again' )
+
         else:
-            self.daemonize() # TODO catch errors and edge cases...
+            self.daemonize() 
             self.run()
 
 
     def status(self):
-
+        """Status of current daemon process. """
         # TODO: check if pid is in process list
         pid = self.get_pid_from_file()
         if pid:
-            sys.stdout.write('daemon running with pid: ' + str(pid) + '\n')
-            sys.stdout.write('path to pid file: ' +  self.pid_file + '\n')
+            if psutil.pid_exists(pid):
+                sys.stdout.write('daemon running with pid: ' + str(pid) + '\n')
+                sys.stdout.write('path to pid file: ' +  self.pid_file + '\n')
+            else:
+                sys.stdout.write('Something wrong, process ' + str(pid) +' not alive anymore. \n')
         else:
             sys.stdout.write('No daemon running \n')     
 
