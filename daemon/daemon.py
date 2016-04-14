@@ -32,60 +32,41 @@ class Daemon:
         if pid_file:
             self.pid_file = pid_file
         else:
-            unique_filepart = str(uuid.uuid4())
-            # [TODO] tempfile if no fileparameter is set
-            self.pid_file = '/tmp/tmp_pid_file' + unique_filenpart + '.pid'
-        
+            self.pid_file = '/tmp/tmp_pid_file.pid'      
         if len(sys.argv) != 2:
-            raise Exception('Something is wrong, 2 parameters expected: <daemon.py> <command> ')
+            raise Exception('Something is wrong, 2 parameters expected: <daemon.py> <start|stop|status> ')
         self.command = sys.argv[1]
 
 
 
-    def daemonize(self, stdin='/dev/null', stdout='/Users/franziskaadler/Code/Deamon/daemon/my_daemon_trail.txt', stderr='/dev/null'):
+    def daemonize(self, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         """ Creates a daemon."""
-        logger.info('... daemonizing')
-        #[TODO] set stdout, stderr to log file, if somehow possible
-        sys.stdout.write('beginning..' + str(os.getpid()) + ' \n')
-
+        logger.info('Daemonizing ...')
         try: 
-            parent_pid = os.getpid() # just for logging, to be deleted later
             pid = os.fork()
-
-            if pid > 0: # good pid
-                logger.info('exit first parent pid ' + str(parent_pid) + ', forked child: ' + str(pid))
-                sys.stdout.write('beginning..1 ' + str(os.getpid()) + ' \n')
-                sys.stdout.write('before first exit' + str(os.getpid()))
-                sys.exit(0) 
-                
+            if pid > 0:
+                sys.exit(0)    
+            else:
+                logger.error('oserror first parent fork, pid <= 0')  
         except OSError as err: 
             logger.error('oserror first parent fork')
-            sys.exit(1) # exit with error
-
-        logger.info('exit first parent pid ' + str(parent_pid) + ', forked child: ' + str(pid))
+            sys.exit(1) 
 
         # decouple from parent environment
-
         os.setsid() 
         os.umask(0) 
         os.chdir("/") 
-
-
-
         try: 
             # Second fork - prevent you from accidentally reacquiring a controlling terminal
             parent_pid = os.getpid()
             pid = os.fork()
             if pid > 0:
                 print('daemon: ', pid)
-                logger.info('exit second parent pid ' + str(parent_pid) + ', forked child/ daemon: ' + str(pid))
                 sys.exit(0) 
                 
         except OSError as err: 
             logger.error('oserror second parent fork')
-            sys.exit(1) # exit with error
-
-        logger.info('exit second parent pid ' + str(parent_pid) + ', forked child: ' + str(pid))
+            sys.exit(1)
 
         # redirect standard file descriptors
         sys.stdout.flush()
@@ -97,11 +78,6 @@ class Daemon:
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
 
-
-
-        sys.stdout.write('yeah')
-
-
         # write current daemon pid to file
         try:
             pid = str(os.getpid())
@@ -109,9 +85,8 @@ class Daemon:
                 f.write(str(pid))
             f.close()
         except IOError as err:
-            logger.error('IOError writing pid to pid file')
-            
-        logger.info('finishing daemonize method' )
+            logger.error('IOError writing pid to pid file')          
+        logger.info('... finishing daemonize method' )
 
 
     def run(self):
@@ -121,7 +96,7 @@ class Daemon:
 
     def stop(self): 
         """Stop the daemon."""
-        
+
         pid = self.get_pid_from_file()
         if pid:
            try:                
@@ -130,12 +105,12 @@ class Daemon:
            except:
                logger.error('Problem killing process')       
         else:
-            sys.stdout.write('pid file not found')
+            sys.stdout.write('pid not found at: ' + self.pid_file + '. Is daemon running? \n')
 
 
     def get_pid_from_file(self):
 
-        if os.path.isfile(self.pid_file): 
+        if os.path.isfile(self.pid_file):
             try:
                 pid = int(open(self.pid_file).read().strip())
                 return pid
@@ -147,9 +122,11 @@ class Daemon:
 
     def start(self):
         """Start the daemon."""
-        print(self.pid_file)
-        self.daemonize() # TODO catch errors and edge cases...
-        self.run()
+        if os.path.isfile(self.pid_file): 
+            raise Exception('Seems daemon is already running')
+        else:
+            self.daemonize() # TODO catch errors and edge cases...
+            self.run()
 
 
     def status(self):
@@ -158,7 +135,7 @@ class Daemon:
         pid = self.get_pid_from_file()
         if pid:
             sys.stdout.write('daemon running with pid: ' + str(pid) + '\n')
-            sys.stdout.write('path to pid: ' +  self.pid_file + '\n')
+            sys.stdout.write('path to pid file: ' +  self.pid_file + '\n')
         else:
             sys.stdout.write('No daemon running \n')     
 
@@ -188,7 +165,7 @@ class MyDaemon(Daemon):
 
 
 def main():
-    d = MyDaemon('/Users/franziskaadler/Code/Deamon/daemon/pid_file.pid')
+    d = MyDaemon()
     sys.exit(d.action())
 
 
