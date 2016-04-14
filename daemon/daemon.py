@@ -175,8 +175,48 @@ class MyDaemon(Daemon):
             logger.info(str(count) + '. pid: ' + str(os.getpid()))
 
 
+import floto.decider
+import floto.specs
+import floto
+
+class Decider(Daemon):
+    domain = 'floto_test'
+    simple_task = floto.specs.task.ActivityTask(domain=domain, name='activity1', version='v5')
+    decider_spec = floto.specs.DeciderSpec(domain=domain,
+                                       task_list='simple_decider',
+                                       default_activity_task_list='hello_world_atl',
+                                       terminate_decider_after_completion=True,
+                                       activity_tasks=[simple_task])
+
+    decider = floto.decider.Decider(decider_spec=decider_spec)
+
+
+    def run(self):
+        decider.run()
+        sys.stdout.write('current decider pid: ' + os.getpid())
+        print('current decider pid: ' + os.getpid())
+
+       
+class Worker(Daemon):
+    @floto.activity(domain=domain, name='activity1', version='v5')
+    def simple_activity():
+        print('\nSimpleWorker: I\'m working!')
+        for i in range(3):
+            print('.')
+            time.sleep(0.8)
+
+        # Terminate the worker after first execution:
+        print('I\'m done.')
+
+
+    def run(self):
+        worker = floto.ActivityWorker(domain=domain, task_list='hello_world_atl')
+        worker.run()
+
+
+
 def main():
-    d = MyDaemon()
+    d = Decider('tmp/decider_stuff.pid')
     sys.exit(d.action())
 
 
