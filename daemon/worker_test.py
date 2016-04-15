@@ -1,7 +1,16 @@
-from daemon import *
+import logging
 
+#logging.basicConfig(filename='my_worker.log',level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+import floto
+from daemon import Daemon
+import sys
+import time
 
 class Worker(Daemon):
+    domain = 'floto_test'
+
     @floto.activity(domain=domain, name='activity1', version='v5')
     def simple_activity():
         print('\nSimpleWorker: I\'m working!')
@@ -14,12 +23,14 @@ class Worker(Daemon):
 
 
     def run(self):
-        worker = floto.ActivityWorker(domain=domain, task_list='hello_world_atl')
+        logging.basicConfig(filename='my_worker.log',level=logging.DEBUG)
+        worker = floto.ActivityWorker(domain=self.domain, task_list='hello_world_atl')
         worker.run()
 
 
 def main():
-    d = Worker('tmp/worker_stuff.pid')
+    #Worker().run()
+    d = Worker('/tmp/worker_stuff.pid')
     sys.exit(d.action())
 
 

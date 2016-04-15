@@ -73,6 +73,7 @@ class Base:
         raise NotImplementedError
 
     def run(self, separate_process=False):
+        logger.debug('running decider')
         if separate_process:
             self._separate_process = multiprocessing.Process(target=self._run)
             self._separate_process.start()

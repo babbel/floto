@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+import logging
+logging.basicConfig(filename='my_daemon.log',level=logging.DEBUG)
 
 import os
-import logging
 import sys
 import time
 
@@ -12,7 +13,6 @@ import psutil
 from signal import SIGTERM
 
 
-logging.basicConfig(filename='my_daemon.log',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -165,16 +165,6 @@ class Daemon:
 #######################
 
 
-class MyDaemon(Daemon):
-    def run(self):
-        count = 0
-        while True:
-            # some stuff to be done by the daemon
-            count += 1
-            time.sleep(1)
-            logger.info(str(count) + '. pid: ' + str(os.getpid()))
-
-
 import floto.decider
 import floto.specs
 import floto
@@ -185,40 +175,24 @@ class Decider(Daemon):
     decider_spec = floto.specs.DeciderSpec(domain=domain,
                                        task_list='simple_decider',
                                        default_activity_task_list='hello_world_atl',
-                                       terminate_decider_after_completion=True,
+                                       terminate_decider_after_completion=False,
                                        activity_tasks=[simple_task])
-
     decider = floto.decider.Decider(decider_spec=decider_spec)
 
-
     def run(self):
-        decider.run()
-        sys.stdout.write('current decider pid: ' + os.getpid())
-        print('current decider pid: ' + os.getpid())
+        logger.debug('starting decider')
+        logger.debug(self.decider)
+        self.decider.run()
+        logger.debug('decider finished')
+        #sys.stdout.write('current decider pid: ' + os.getpid())
+        #print('current decider pid: ' + os.getpid())
 
        
-class Worker(Daemon):
-    @floto.activity(domain=domain, name='activity1', version='v5')
-    def simple_activity():
-        print('\nSimpleWorker: I\'m working!')
-        for i in range(3):
-            print('.')
-            time.sleep(0.8)
-
-        # Terminate the worker after first execution:
-        print('I\'m done.')
-
-
-    def run(self):
-        worker = floto.ActivityWorker(domain=domain, task_list='hello_world_atl')
-        worker.run()
-
-
-
 def main():
-    d = Decider('tmp/decider_stuff.pid')
+    d = Decider('/tmp/decider_stuff.pid')
     sys.exit(d.action())
 
 
 if __name__ == '__main__':
     main()
+
