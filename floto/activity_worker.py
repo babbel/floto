@@ -7,6 +7,8 @@ from inspect import signature
 import floto.api
 import floto.specs
 
+import floto.utils.logging_filter
+
 class ActivityWorker:
     """The worker which performs the activities.
     Usage:
@@ -56,7 +58,11 @@ class ActivityWorker:
             self.identity = socket.getfqdn(socket.gethostname())
 
         self.heartbeat_sender = floto.HeartbeatSender()
-        self.logger = floto.Logger.getLogger(__name__, self.identity)
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.addFilter(floto.utils.logging_filter.FilterAddIdentity(self.identity))
+        self.logger.addFilter(floto.utils.logging_filter.FilterAddContext())
+
 
     def poll(self):
         self.logger.debug('ActivityWorker.poll...')
