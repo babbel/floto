@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 import logging
-logging.basicConfig(filename='my_daemon.log',level=logging.DEBUG)
-
 import os
 import sys
 import time
-
-import os.path
-import uuid
-import tempfile
-import psutil
 from signal import SIGTERM
 
+import psutil
 
+
+logging.basicConfig(filename='daemon/my_daemon.log', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -21,50 +17,47 @@ logger = logging.getLogger(__name__)
 ##################
 
 
-class Daemon:
+class UnixDaemon:
     """This needs to be inherited and run method overwritten to create a deamon.
-    It forks the current process to get a deamon. 
+    It forks the current process to get a deamon.
     See 'Python Cookbook', Martelli et al. O'Reilly, 2nd edition, page: 388
-    and https://github.com/ImmobilienScout24/succubus/blob/master/src/main/python/succubus/daemonize.py """
-    
+    and https://github.com/ImmobilienScout24/succubus/blob/master/src/main/
+    python/succubus/daemonize.py """
 
     def __init__(self, pid_file=None):
-        
         if pid_file:
             self.pid_file = pid_file
         else:
-            self.pid_file = '/tmp/tmp_pid_file.pid'      
+            self.pid_file = '/tmp/tmp_pid_file.pid'
         if len(sys.argv) != 2:
-            raise Exception('Something is wrong, 2 parameters expected: <daemon.py> <start|stop|status> ')
+            raise Exception('2 parameters expected: <daemon.py> <start|stop|status>')
         self.command = sys.argv[1]
-
 
     def daemonize(self, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         """ Creates a daemon."""
+        # TODO: stdout and stderr to log files
         logger.info('Daemonizing ...')
-        try: 
+        try:
             pid = os.fork()
             if pid > 0:
-                sys.exit(0)    
-            else:
-                logger.error('oserror first parent fork, pid <= 0')  
-        except OSError as err: 
-            logger.error('oserror first parent fork')
-            sys.exit(1) 
+                sys.exit(0)
+        except OSError as err:
+            sys.stderr.write('First fork: OS error({0}): {1}'.format(err.errno, err.strerror))
+            logger.error('First parent fork failed.')
+            sys.exit(1)
 
         # decouple from parent environment
-        os.setsid() 
-        os.umask(0) 
-        os.chdir("/") 
-        try: 
-            # Second fork - prevent you from accidentally reacquiring a controlling terminal
-            parent_pid = os.getpid()
+        os.setsid()
+        os.umask(0)
+        os.chdir("/")
+        try:
+            # Second fork
             pid = os.fork()
             if pid > 0:
                 print('daemon: ', pid)
-                sys.exit(0) 
-                
-        except OSError as err: 
+                sys.exit(0)
+        except OSError as err:
+            sys.stderr.write('Second fork: OS error({0}): {1}'.format(err.errno, err.strerror))
             logger.error('oserror second parent fork')
             sys.exit(1)
 
@@ -85,30 +78,25 @@ class Daemon:
                 f.write(str(pid))
             f.close()
         except IOError as err:
-            logger.error('IOError writing pid to pid file')          
-        logger.info('... finishing daemonize method' )
-
+            sys.stderr.write('IOError writing pid to pid file ({0}): {1}'.format(err.errno, err.strerror))
+            logger.error('IOError writing pid to pid file')
+        logger.info('... finishing daemonize method')
 
     def run(self):
         """to be overwritten"""
         raise NotImplementedError
 
-
-    def stop(self): 
+    def stop(self):
         """Stop the daemon."""
-        pid = self.get_pid_from_file()  
-        try:  
-            os.remove(self.pid_file)        
-            if pid:           
+        pid = self.get_pid_from_file()
+        try:
+            os.remove(self.pid_file)
+            if pid:
                os.kill(pid, SIGTERM)
             else:
                 sys.stdout.write('pid not found at: ' + self.pid_file + '. Is daemon running? \n')
-            
         except:
-            logger.error('Problem killing process')  
-
-        
-
+            logger.error('Problem killing process')
 
     def get_pid_from_file(self):
         """Returns pid of current daemon."""
@@ -117,25 +105,23 @@ class Daemon:
                 pid = int(open(self.pid_file).read().strip())
                 return pid
             except:
-                logger.error('Problems reading in pid from pid file')                
+                logger.error('Problems reading in pid from pid file')
         else:
             return None
-        
 
     def start(self):
         """Start the daemon."""
-        if os.path.isfile(self.pid_file): 
+        if os.path.isfile(self.pid_file):
             pid = self.get_pid_from_file()
             if psutil.pid_exists(pid):
                 sys.stdout.write('pid already exists')
                 raise Exception('Seems daemon is already running')
-            else: 
-                raise Exception('Something went wrong, try turn it on and off again' )
+            else:
+                raise Exception('Something went wrong, try turn it on and off again')
 
         else:
-            self.daemonize() 
+            self.daemonize()
             self.run()
-
 
     def status(self):
         """Status of current daemon process. """
@@ -144,12 +130,11 @@ class Daemon:
         if pid:
             if psutil.pid_exists(pid):
                 sys.stdout.write('daemon running with pid: ' + str(pid) + '\n')
-                sys.stdout.write('path to pid file: ' +  self.pid_file + '\n')
+                sys.stdout.write('path to pid file: ' + self.pid_file + '\n')
             else:
-                sys.stdout.write('Something wrong, process ' + str(pid) +' not alive anymore. \n')
+                sys.stdout.write('Something wrong, process ' + str(pid) + ' not alive anymore. \n')
         else:
-            sys.stdout.write('No daemon running \n')     
-
+            sys.stdout.write('No daemon running \n')
 
     def action(self):
         if self.command == 'start':
@@ -164,35 +149,24 @@ class Daemon:
 # Specify Deamon Task #
 #######################
 
-
-import floto.decider
-import floto.specs
-import floto
-
-class Decider(Daemon):
-    domain = 'floto_test'
-    simple_task = floto.specs.task.ActivityTask(domain=domain, name='activity1', version='v5')
-    decider_spec = floto.specs.DeciderSpec(domain=domain,
-                                       task_list='simple_decider',
-                                       default_activity_task_list='hello_world_atl',
-                                       terminate_decider_after_completion=False,
-                                       activity_tasks=[simple_task])
-    decider = floto.decider.Decider(decider_spec=decider_spec)
+class MyDaemon(UnixDaemon):
+    logger.info('here')
+    print('active')
 
     def run(self):
-        logger.debug('starting decider')
-        logger.debug(self.decider)
-        self.decider.run()
-        logger.debug('decider finished')
-        #sys.stdout.write('current decider pid: ' + os.getpid())
-        #print('current decider pid: ' + os.getpid())
+        count = 0
+        while True:
+            # some stuff to be done by the daemon
+            print('overwrite')
+            count += 1
+            time.sleep(1)
+            logger.info(str(count) + '. pid: ' + str(os.getpid()))
 
-       
+
 def main():
-    d = Decider('/tmp/decider_stuff.pid')
+    d = MyDaemon()
     sys.exit(d.action())
 
 
 if __name__ == '__main__':
     main()
-
