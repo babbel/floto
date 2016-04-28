@@ -2,6 +2,8 @@ import logging
 
 import floto.decider
 from floto.daemon import UnixDaemon
+import os
+import yaml
 
 class DeciderDaemon(UnixDaemon):
     def __init__(self):

@@ -4,7 +4,6 @@ import os
 import sys
 import time
 import argparse
-import yaml
 
 from signal import SIGTERM
 
@@ -22,16 +21,7 @@ class UnixDaemon:
         self._arg_parser = None
         self._pid_file = None
         self.daemon_description = 'Base unix daemon'
-
-    @property
-    def logger(self):
-        if not self._logger:
-            self._logger = logging.getLogger(__name__)
-        return self._logger
-
-    @logger.setter
-    def logger(self, logger):
-        self._logger = logger
+        self.logger = logging.getLogger(__name__)
 
     @property
     def args(self):
@@ -72,13 +62,13 @@ class UnixDaemon:
         super().add_parse_arguments(parser)
         before.
         """
-        parser.add_argument('command', help='The daemon command: start|status|stop')
+        parser.add_argument('command', help='The daemon command: start|status|stop|restart')
         parser.add_argument('--pid_file', help='The pid_file of the daemon')
     
     def fork(self):
         try:
             pid = os.fork()
-            # If in thild process exit
+            # If in parent process exit
             if pid > 0:
                 os._exit(0)
         except OSError as err:
@@ -88,7 +78,6 @@ class UnixDaemon:
     def daemonize(self, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         """ Creates a daemon."""
         # TODO: stdout and stderr to log files
-        self.logger.info('Daemonizing ...')
         self.fork()
 
         # decouple from parent environment with new session id
@@ -131,48 +120,43 @@ class UnixDaemon:
     def stop(self):
         """Stop the daemon."""
         pid = self.get_pid_from_file()
-        try:
-            os.remove(self.pid_file)
-            if pid:
-                os.kill(pid, SIGTERM)
-            else:
-                sys.stdout.write('pid not found at: ' + self.pid_file + '. Is daemon running? \n')
-        except:
-            self.logger.error('Problem killing process')
+        self._delete_pid_file()
+        if pid:
+            self._kill_process(pid)
 
     def get_pid_from_file(self):
         """Returns pid of current daemon."""
+        pid = None
         if os.path.isfile(self.pid_file):
             try:
                 pid = int(open(self.pid_file).read().strip())
-                return pid
             except:
                 self.logger.error('Problems reading in pid from pid file')
         else:
-            return None
+            self.logger.error('pid_file does not exist: {}'.format(self.pid_file))
+        return pid
 
     def start(self):
         """Start the daemon."""
         if os.path.isfile(self.pid_file):
             pid = self.get_pid_from_file()
             if self._pid_exists(pid):
-                self.logger.error('Tried to start already running daemon')
-                raise Exception('Seems daemon is already running')
+                msg = 'Daemon already running: {}'.format(pid)
+                self.logger.error(msg)
+                raise Exception(msg)
             else:
                 msg = 'pid_file exists: {}, but process is not running.'.format(self.pid_file)
                 self.logger.error(msg)
                 raise Exception(msg)
-
         else:
             self.daemonize()
             self.run()
 
-            self.logger.debug('finished run(), cleaning up after myself')
-            os.remove(self.pid_file)
+            # Finished run(), remove pid_file 
+            self._delete_pid_file() 
 
     def status(self):
         """Status of current daemon process. """
-        # TODO: check if pid is in process list
         pid = self.get_pid_from_file()
         if pid:
             if self._pid_exists(pid):
@@ -183,13 +167,16 @@ class UnixDaemon:
         else:
             sys.stdout.write('No daemon running \n')
 
+    def restart(self):
+        self.stop()
+        self.start()
+
     def action(self):
-        if self.args.command == 'start':
-            self.start()
-        if self.args.command == 'stop':
-            self.stop()
-        if self.args.command == 'status':
-            self.status()
+        try:
+            getattr(self, self.args.command)()
+        except AttributeError:
+            msg = 'Command must be start|status|stop|restart. Was {}'.format(self.args.command)
+            self.logger.error(msg)
 
     def _pid_exists(self, pid):
         """Check for the existence of a unix pid."""
@@ -201,4 +188,20 @@ class UnixDaemon:
             return False
         else:
             return True
+
+    def _kill_process(self, pid):
+        try:
+            for _ in range(100):
+                os.kill(pid, SIGTERM)
+                time.sleep(0.1)
+        except ProcessLookupError:
+            return
+        except OSError as err:
+            self.logger.error(msg)
+
+    def _delete_pid_file(self):
+        try:
+            os.remove(self.pid_file)
+        except FileNotFoundError:
+            self.logger.error('pid_file does not exist: {}'.format(self.pid_file))
 

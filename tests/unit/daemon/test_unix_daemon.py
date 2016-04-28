@@ -20,6 +20,10 @@ class TestDaemon(floto.daemon.UnixDaemon):
         while self.run_ongoing_task:
             time.sleep(1)
 
+    # Do not fork for testing
+    def daemonize(self):
+        self.write_pid_file()
+
 class TestUnixDaemon:
     def test_start_is_called(self, mocker):
         mocker.patch('floto.daemon.UnixDaemon.start')
