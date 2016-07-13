@@ -1,286 +1,122 @@
 {
-  "activity_task_list": "demo_step_activities",
   "activity_tasks": [
     {
-      "id_": "demo_step1:v4:2be88ca4242c76e",
+      "domain": "floto_test",
+      "id_": "demo_step1:v4:floto_test:2be88ca424",
       "name": "demo_step1",
       "retry_strategy": {
         "retries": 2,
         "type": "floto.specs.retry_strategy.InstantRetry"
       },
-      "type": "floto.specs.ActivityTask",
+      "type": "floto.specs.task.ActivityTask",
       "version": "v4"
     },
     {
-      "id_": "demo_step2:v4:2be88ca4242c76e",
+      "domain": "floto_test",
+      "id_": "demo_step2:v4:floto_test:41c9c82a1d",
       "name": "demo_step2",
       "requires": [
-        {
-          "id_": "demo_step1:v4:2be88ca4242c76e",
-          "name": "demo_step1",
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        }
+        "demo_step1:v4:floto_test:2be88ca424"
       ],
       "retry_strategy": {
         "retries": 2,
         "type": "floto.specs.retry_strategy.InstantRetry"
       },
-      "type": "floto.specs.ActivityTask",
+      "type": "floto.specs.task.ActivityTask",
       "version": "v4"
     },
     {
-      "id_": "demo_step3:v4:bbc8b26b164c7a9",
+      "domain": "floto_test",
+      "id_": "demo_step3:v4:floto_test:564cd1c8b8",
       "input": {
         "start_val": 5
       },
       "name": "demo_step3",
       "requires": [
-        {
-          "id_": "demo_step1:v4:2be88ca4242c76e",
-          "name": "demo_step1",
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        }
+        "demo_step1:v4:floto_test:2be88ca424"
       ],
       "retry_strategy": {
         "retries": 2,
         "type": "floto.specs.retry_strategy.InstantRetry"
       },
-      "type": "floto.specs.ActivityTask",
+      "type": "floto.specs.task.ActivityTask",
       "version": "v4"
     },
     {
-      "id_": "demo_step3:v4:279f0c3af599c8a",
+      "domain": "floto_test",
+      "id_": "demo_step3:v4:floto_test:26eff2c3fd",
       "input": {
         "start_val": 4
       },
       "name": "demo_step3",
       "requires": [
-        {
-          "id_": "demo_step1:v4:2be88ca4242c76e",
-          "name": "demo_step1",
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        }
+        "demo_step1:v4:floto_test:2be88ca424"
       ],
       "retry_strategy": {
         "retries": 2,
         "type": "floto.specs.retry_strategy.InstantRetry"
       },
-      "type": "floto.specs.ActivityTask",
+      "type": "floto.specs.task.ActivityTask",
       "version": "v4"
     },
     {
-      "id_": "demo_step3:v4:bfb4674ecb2671d",
+      "domain": "floto_test",
+      "id_": "demo_step3:v4:floto_test:395dd30fe6",
       "input": {
         "start_val": 3
       },
       "name": "demo_step3",
       "requires": [
-        {
-          "id_": "demo_step1:v4:2be88ca4242c76e",
-          "name": "demo_step1",
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        }
+        "demo_step1:v4:floto_test:2be88ca424"
       ],
       "retry_strategy": {
         "retries": 2,
         "type": "floto.specs.retry_strategy.InstantRetry"
       },
-      "type": "floto.specs.ActivityTask",
+      "type": "floto.specs.task.ActivityTask",
       "version": "v4"
     },
     {
-      "id_": "demo_step3:v4:28357b3acfd01e8",
+      "domain": "floto_test",
+      "id_": "demo_step3:v4:floto_test:9cc2f3d8c2",
       "input": {
         "start_val": 2
       },
       "name": "demo_step3",
       "requires": [
-        {
-          "id_": "demo_step1:v4:2be88ca4242c76e",
-          "name": "demo_step1",
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        }
+        "demo_step1:v4:floto_test:2be88ca424"
       ],
       "retry_strategy": {
         "retries": 2,
         "type": "floto.specs.retry_strategy.InstantRetry"
       },
-      "type": "floto.specs.ActivityTask",
+      "type": "floto.specs.task.ActivityTask",
       "version": "v4"
     },
     {
-      "id_": "demo_step3:v4:9994b30e9e6556d",
+      "domain": "floto_test",
+      "id_": "demo_step3:v4:floto_test:b342ddc5d3",
       "input": {
         "start_val": 1
       },
       "name": "demo_step3",
       "requires": [
-        {
-          "id_": "demo_step1:v4:2be88ca4242c76e",
-          "name": "demo_step1",
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        },
-        {
-          "id_": "demo_step2:v4:2be88ca4242c76e",
-          "name": "demo_step2",
-          "requires": [
-            {
-              "id_": "demo_step1:v4:2be88ca4242c76e",
-              "name": "demo_step1",
-              "retry_strategy": {
-                "retries": 2,
-                "type": "floto.specs.retry_strategy.InstantRetry"
-              },
-              "type": "floto.specs.ActivityTask",
-              "version": "v4"
-            }
-          ],
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        },
-        {
-          "id_": "demo_step3:v4:bbc8b26b164c7a9",
-          "input": {
-            "start_val": 5
-          },
-          "name": "demo_step3",
-          "requires": [
-            {
-              "id_": "demo_step1:v4:2be88ca4242c76e",
-              "name": "demo_step1",
-              "retry_strategy": {
-                "retries": 2,
-                "type": "floto.specs.retry_strategy.InstantRetry"
-              },
-              "type": "floto.specs.ActivityTask",
-              "version": "v4"
-            }
-          ],
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        },
-        {
-          "id_": "demo_step3:v4:279f0c3af599c8a",
-          "input": {
-            "start_val": 4
-          },
-          "name": "demo_step3",
-          "requires": [
-            {
-              "id_": "demo_step1:v4:2be88ca4242c76e",
-              "name": "demo_step1",
-              "retry_strategy": {
-                "retries": 2,
-                "type": "floto.specs.retry_strategy.InstantRetry"
-              },
-              "type": "floto.specs.ActivityTask",
-              "version": "v4"
-            }
-          ],
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        },
-        {
-          "id_": "demo_step3:v4:bfb4674ecb2671d",
-          "input": {
-            "start_val": 3
-          },
-          "name": "demo_step3",
-          "requires": [
-            {
-              "id_": "demo_step1:v4:2be88ca4242c76e",
-              "name": "demo_step1",
-              "retry_strategy": {
-                "retries": 2,
-                "type": "floto.specs.retry_strategy.InstantRetry"
-              },
-              "type": "floto.specs.ActivityTask",
-              "version": "v4"
-            }
-          ],
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        },
-        {
-          "id_": "demo_step3:v4:28357b3acfd01e8",
-          "input": {
-            "start_val": 2
-          },
-          "name": "demo_step3",
-          "requires": [
-            {
-              "id_": "demo_step1:v4:2be88ca4242c76e",
-              "name": "demo_step1",
-              "retry_strategy": {
-                "retries": 2,
-                "type": "floto.specs.retry_strategy.InstantRetry"
-              },
-              "type": "floto.specs.ActivityTask",
-              "version": "v4"
-            }
-          ],
-          "retry_strategy": {
-            "retries": 2,
-            "type": "floto.specs.retry_strategy.InstantRetry"
-          },
-          "type": "floto.specs.ActivityTask",
-          "version": "v4"
-        }
+        "demo_step1:v4:floto_test:2be88ca424",
+        "demo_step2:v4:floto_test:41c9c82a1d",
+        "demo_step3:v4:floto_test:564cd1c8b8",
+        "demo_step3:v4:floto_test:26eff2c3fd",
+        "demo_step3:v4:floto_test:395dd30fe6",
+        "demo_step3:v4:floto_test:9cc2f3d8c2"
       ],
       "retry_strategy": {
         "retries": 2,
         "type": "floto.specs.retry_strategy.InstantRetry"
       },
-      "type": "floto.specs.ActivityTask",
+      "type": "floto.specs.task.ActivityTask",
       "version": "v4"
     }
   ],
+  "default_activity_task_list": "demo_step_activities",
   "domain": "floto_test",
   "repeat_workflow": false,
   "task_list": "demo_step_decisions",

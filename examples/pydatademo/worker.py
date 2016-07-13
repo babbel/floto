@@ -31,9 +31,10 @@ def step1(context):
         pass
 
     result = random.randint(min_val, max_val)
+    
     return {'result': result}
 
-
+# sleep startval * step1
 @floto.activity(domain=domain, name='demo_step2', version='v4')
 def step2(context):
     logger.debug('Running step2. Context: {}'.format(context))
@@ -42,8 +43,9 @@ def step2(context):
     results_step1 = [v['result'] for k, v in context.items() if 'demo_step1' in k]
     sleeptime = min(results_step1)
     print('step2 will sleep for {} seconds'.format((sleeptime)))
-    time.sleep(sleeptime)
 
+    time.sleep(sleeptime)
+    print('... done\n')
     result = random.randint(10, 20)
     return {'result': result}
 
@@ -56,7 +58,7 @@ def step3(context):
     sleeptime = context.get('activity_task', {}).get('start_val', 0)
     print('step3 will sleep for {} * 2 seconds'.format((sleeptime)))
     time.sleep(sleeptime * 2)
-
+    print('... done\n')
     return {'result': sleeptime * 2}
 
 
