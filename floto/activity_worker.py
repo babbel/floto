@@ -7,8 +7,7 @@ from inspect import signature
 import floto.api
 import floto.specs
 
-logger = logging.getLogger(__name__)
-
+import floto.utils.logging_filter
 
 class ActivityWorker:
     """The worker which performs the activities.
@@ -60,8 +59,13 @@ class ActivityWorker:
 
         self.heartbeat_sender = floto.HeartbeatSender()
 
+        self.logger = logging.getLogger(__name__)
+        self.logger.addFilter(floto.utils.logging_filter.FilterAddIdentity(self.identity))
+        self.logger.addFilter(floto.utils.logging_filter.FilterAddContext())
+
+
     def poll(self):
-        logger.debug('ActivityWorker.poll...')
+        self.logger.debug('ActivityWorker.poll...')
         self.last_response = self.swf.poll_for_activity_task(domain=self.domain,
                                                              task_list=self.task_list,
                                                              identity=self.identity)
@@ -71,7 +75,7 @@ class ActivityWorker:
             self.task_token = None
 
     def run(self):
-        logger.debug('ACTIVITY_FUNCS: {}'.format(floto.ACTIVITY_FUNCTIONS))
+        self.logger.debug('ACTIVITY_FUNCS: {}'.format(floto.ACTIVITY_FUNCTIONS))
         number_polls = 0
         while (not self.get_terminate_activity_worker()) and (number_polls < self.max_polls):
             self.poll()
@@ -93,15 +97,17 @@ class ActivityWorker:
                         try:
                             self.complete()
                         except Exception as e:
-                            logger.warning(e)
+                            self.logger.warning(e)
                     else:
-                        raise ValueError('No activity with id {} registered'.format(function_id))
+                        msg = 'No activity with id {} registered'.format(function_id)
+                        self.logger.error(msg)
+                        raise ValueError(msg)
                 except Exception as e:
                     self.stop_heartbeat()
                     try:
                         self.task_failed(e)
                     except Exception as e2:
-                        logger.warning(e)
+                        self.logger.warning(e)
 
     def get_context(self):
         context = {}
@@ -113,26 +119,27 @@ class ActivityWorker:
         return self._terminate_activity_worker
 
     def task_failed(self, error):
-        logger.debug('ActivityWorker.task_failed...')
+        self.logger.debug('ActivityWorker.task_failed...')
         self.swf.client.respond_activity_task_failed(taskToken=self.task_token, details=str(error))
 
     def terminate_worker(self):
         self._terminate_activity_worker = True
 
     def complete(self):
-        logger.debug('ActivityWorker.complete...')
+        self.logger.debug('ActivityWorker.complete...')
         args = {'taskToken': self.task_token}
         if self.result:
             args['result'] = floto.specs.JSONEncoder.dump_object(self.result)
         self.swf.client.respond_activity_task_completed(**args)
 
     def start_heartbeat(self):
-        logger.debug('ActivityWorker.start_heartbeat...')
+        self.logger.debug('ActivityWorker.start_heartbeat...')
         args = {'timeout': self.task_heartbeat_in_seconds,
                 'task_token': self.task_token}
         if self.task_heartbeat_in_seconds:
             self.heartbeat_sender.send_heartbeats(**args)
 
     def stop_heartbeat(self):
-        logger.debug('ActivityWorker.start_heartbeat...')
+        self.logger.debug('ActivityWorker.start_heartbeat...')
         self.heartbeat_sender.stop_heartbeats()
+

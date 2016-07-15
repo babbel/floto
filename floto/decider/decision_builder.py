@@ -237,7 +237,7 @@ class DecisionBuilder:
         return False
 
     def outgoing_nodes_completed(self):
-        """Check if all activity tasks which are outgoing vertices of the execution graph are
+        """Check if all activity tasks which are outgoing nodes of the execution graph are
         completed."""
         outgoing_nodes = [self.tasks_by_id[i] for i in self.execution_graph.get_outgoing_nodes()]
         for t in outgoing_nodes:
