@@ -311,7 +311,7 @@ floto.ActivityWorker(domain='floto_test', task_list='your_activity_task_list', h
 ```
 The default value is 90 seconds. If it is set to 0, no heartbeat is sent.
 ## floto's simple SWF API
-For easier access to the SWF API floto provides functionality throught the ``floto.api`` module.
+For easier access to the SWF API floto provides functionality through the ``floto.api`` module.
 ### Interface to SWF
 In order to communicate with SWF create an ``swf`` object:
 ```python
